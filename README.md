@@ -21,10 +21,10 @@ This chatbot is written entirely in **ES5 JavaScript** using `XMLHttpRequest`, `
 
 ### Core Chat Experience
 - **Multi-turn conversation** with full message history
-- **10 model choices** via OpenRouter (Claude, GPT-4o, Gemini, Llama, Nemotron)
+- **Dynamic Model Fetching**: Access hundreds of models via OpenRouter by clicking "Refresh Models", with 10 sensible default models built-in.
 - **Vision/Image Support**: Upload images directly from your camera roll to vision-capable AI models.
 - **System Prompt Personas**: Select pre-configured personas or write and **save your own custom personas** persistently.
-- **Message Actions**: Regenerate AI responses, edit your previous messages, or copy AI text to your clipboard.
+- **Message Actions**: Regenerate AI responses, edit your previous messages, delete specific messages, or copy AI text to your clipboard.
 - **Auto-Save Drafts**: Input is saved on every keystroke, preventing accidental data loss if Safari refreshes.
 - **Stop Generation**: Instantly halt long or unwanted AI responses with a dedicated stop button.
 - **Dynamic Chat Titles**: Conversations automatically generate short summarizing titles after the first message.
@@ -43,8 +43,9 @@ This chatbot is written entirely in **ES5 JavaScript** using `XMLHttpRequest`, `
 - **Smart Scroll**: A floating "Scroll to Bottom" button appears when reading long messages or navigating history.
 - **Smart Send Button**: Dynamically enabled/disabled based on text content and image attachments.
 - **PWA Ready**: Add to Home Screen for a native app experience with a custom icon and standalone window.
+- **Responsive Layout**: Looks great on mobile and tablet, with a centered max-width constraint for comfortable reading on ultra-wide desktop monitors.
 - Typing indicator (animated bouncing dots) and auto-growing textarea input.
-- Error messages displayed inline as bubbles.
+- Error messages displayed inline as bubbles, with clear explanations for rate limits and authorization errors.
 
 ---
 
@@ -137,7 +138,7 @@ Tap **Start Chatting** to enter the chat screen.
 | Llama 3.3 70B (Free) | Meta's free high-quality tier |
 | Nemotron 3 Nano Omni (Free) | NVIDIA's free conversational reasoning tier |
 
-You can switch models anytime by tapping **Settings** in the top-left corner.
+You can switch models anytime by tapping **Settings** in the top-left corner. You can also click **Refresh Models** to dynamically fetch the latest available models from OpenRouter.
 
 ---
 

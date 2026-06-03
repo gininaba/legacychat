@@ -10,6 +10,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="LegacyChat">
   <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTAwJz48cmVjdCB3aWR0aD0nMTAwJyBoZWlnaHQ9JzEwMCcgcng9JzIyJyBmaWxsPSdibHVlJy8+PHRleHQgeD0nNTAlJyB5PSc1MCUnIGR5PScuMzVlbScgZmlsbD0nd2hpdGUnIGZvbnQtc2l6ZT0nNTAnIHRleHQtYW5jaG9yPSdtaWRkbGUnPkxDPC90ZXh0Pjwvc3ZnPg==">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTAwJz48cmVjdCB3aWR0aD0nMTAwJyBoZWlnaHQ9JzEwMCcgcng9JzIyJyBmaWxsPSdibHVlJy8+PHRleHQgeD0nNTAlJyB5PSc1MCUnIGR5PScuMzVlbScgZmlsbD0nd2hpdGUnIGZvbnQtc2l6ZT0nNTAnIHRleHQtYW5jaG9yPSdtaWRkbGUnPkxDPC90ZXh0Pjwvc3ZnPg==">
   <style>
     * {
       -webkit-box-sizing: border-box;
@@ -162,11 +163,23 @@
     /* ─── CHAT SCREEN ─── */
     #chat-screen {
       display: none;
+      height: 100%;
+      background: #efeff4;
+    }
+
+    .chat-container {
+      display: -webkit-box;
+      display: -webkit-flex;
+      display: flex;
       -webkit-box-orient: vertical;
       -webkit-box-direction: normal;
       -webkit-flex-direction: column;
       flex-direction: column;
       height: 100%;
+      max-width: 1000px;
+      margin: 0 auto;
+      width: 100%;
+      position: relative;
     }
 
     /* ─── NAVBAR ─── */
@@ -842,6 +855,15 @@
     }
 
     /* ─── iOS DARK MODE THEME ─── */
+    body.dark-mode {
+      background: #000;
+      color: #fff;
+    }
+    
+    body.dark-mode #chat-screen {
+      background: #000;
+    }
+
     body.dark-mode #setup-screen {
       background: -webkit-radial-gradient(circle, #1c1c1e 0%, #000000 100%);
       background: radial-gradient(circle, #1c1c1e 0%, #000000 100%);
@@ -1101,7 +1123,10 @@
           onblur="blurField('group-api-key')">
       </div>
 
-      <div class="field-label">MODEL</div>
+      <div class="field-label" style="display:flex; justify-content:space-between; align-items:center;">
+        <span>MODEL</span>
+        <button onclick="refreshModels()" style="background:none; border:none; color:#007aff; font-size:12px; font-weight:600; cursor:pointer; -webkit-appearance:none;">Refresh Models</button>
+      </div>
       <div class="field-group" id="group-model">
         <select id="model-select" onfocus="focusField('group-model')" onblur="blurField('group-model')">
           <option value="anthropic/claude-3-haiku">Claude 3 Haiku (Fast)</option>
@@ -1162,6 +1187,7 @@
 
   <!-- ════════════════════════════════ CHAT SCREEN ════════════════════════════════ -->
   <div id="chat-screen">
+    <div class="chat-container">
 
     <div class="nav-bar">
       <button class="nav-btn" onclick="openHistoryDrawer()" aria-label="History">
@@ -1211,6 +1237,7 @@
           <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
         </svg>
       </button>
+    </div>
     </div>
   </div>
 
@@ -1833,8 +1860,9 @@
       hideEmptyState();
 
       // UI append
-      var uiContent = text;
-      if (currentImageBase64) uiContent = '<img src="' + currentImageBase64 + '" class="img-bubble"><br>' + text;
+      var escapedText = escapeHTML(text).replace(/\n/g, '<br>');
+      var uiContent = escapedText;
+      if (currentImageBase64) uiContent = '<img src="' + currentImageBase64 + '" class="img-bubble"><br>' + escapedText;
       appendBubble('user', uiContent, false, false, true, text);
 
       // History append
@@ -1934,12 +1962,18 @@
           console.log('Response headers:', xhr.getAllResponseHeaders());
           console.log('Response body:', xhr.responseText);
           var errMsg = 'Error ' + xhr.status;
-          try {
-            var errData = JSON.parse(xhr.responseText);
-            if (errData.error && errData.error.message) {
-              errMsg = errData.error.message;
-            }
-          } catch (e) { }
+          if (xhr.status === 429) {
+            errMsg = 'Rate limit exceeded. Please wait a moment and try again.';
+          } else if (xhr.status === 401) {
+            errMsg = 'Unauthorized. Please check your API key.';
+          } else {
+            try {
+              var errData = JSON.parse(xhr.responseText);
+              if (errData.error && errData.error.message) {
+                errMsg = errData.error.message;
+              }
+            } catch (e) { }
+          }
           callback(null, errMsg);
         }
       };
@@ -2277,22 +2311,29 @@
           var copyBtn = document.createElement('button');
           copyBtn.className = 'msg-action-btn';
           copyBtn.setAttribute('data-raw', rawTextContent);
-          copyBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> Copy';
+          copyBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> Copy';
           copyBtn.onclick = function() { copyMessage(this); };
           actions.appendChild(copyBtn);
           
           var regenBtn = document.createElement('button');
           regenBtn.className = 'msg-action-btn';
-          regenBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg> Regenerate';
+          regenBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg> Regenerate';
           regenBtn.onclick = function() { regenerateMessage(this); };
           actions.appendChild(regenBtn);
         } else if (role === 'user') {
           var editBtn = document.createElement('button');
           editBtn.className = 'msg-action-btn';
-          editBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg> Edit';
+          editBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg> Edit';
           editBtn.onclick = function() { editMessage(this); };
           actions.appendChild(editBtn);
         }
+
+        var delBtn = document.createElement('button');
+        delBtn.className = 'msg-action-btn';
+        delBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.41-1.41L12 12.59l2.12-2.12 1.41 1.41L13.41 14l2.12 2.12-1.41 1.41L12 15.41l-2.12 2.12-1.41-1.41L10.59 14l-2.13-2.12zM15.5 4l-1-1h-5l-1 1H5v2h14V4z"/></svg> Delete';
+        delBtn.onclick = function() { deleteSingleMessage(this); };
+        actions.appendChild(delBtn);
+
         bubble.appendChild(actions);
       }
 
@@ -2360,6 +2401,67 @@
       messagesEl.appendChild(emptyDiv);
 
       hideClearConfirm();
+    }
+
+    function refreshModels() {
+      var btn = document.querySelector('button[onclick="refreshModels()"]');
+      if (btn) btn.textContent = 'Loading...';
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', 'https://openrouter.ai/api/v1/models', true);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+          if (btn) btn.textContent = 'Refresh Models';
+          if (xhr.status === 200) {
+            try {
+              var data = JSON.parse(xhr.responseText);
+              var select = document.getElementById('model-select');
+              var currentVal = select.value;
+              select.innerHTML = '';
+              data.data.sort(function(a,b){return a.name.localeCompare(b.name);});
+              for (var i = 0; i < data.data.length; i++) {
+                var opt = document.createElement('option');
+                opt.value = data.data[i].id;
+                opt.textContent = data.data[i].name;
+                select.appendChild(opt);
+              }
+              var found = false;
+              for (var j = 0; j < select.options.length; j++) {
+                if (select.options[j].value === currentVal) {
+                  select.options[j].selected = true;
+                  found = true;
+                  break;
+                }
+              }
+              if (!found && select.options.length > 0) {
+                select.options[0].selected = true;
+              }
+            } catch(e) {
+              alert('Failed to parse models.');
+            }
+          } else {
+            alert('Failed to load models.');
+          }
+        }
+      };
+      xhr.send();
+    }
+
+    function deleteSingleMessage(btn) {
+      if (confirm('Delete this message?')) {
+        var row = btn.parentNode.parentNode.parentNode;
+        var wrap = document.getElementById('messages');
+        var nodes = wrap.querySelectorAll('.msg-row');
+        var idx = -1;
+        for (var i = 0; i < nodes.length; i++) {
+          if (nodes[i] === row) { idx = i; break; }
+        }
+        if (idx === -1) return;
+        
+        conversationHistory.splice(idx, 1);
+        row.parentNode.removeChild(row);
+        
+        saveCurrentChat();
+      }
     }
   </script>
 
