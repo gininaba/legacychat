@@ -114,6 +114,10 @@ When you open the app, you'll see the setup screen:
 | **Theme** | Select between Light Mode and Dark Mode. |
 | **Advanced** | Expandable section to tweak AI Temperature and Max Tokens for fine-grained control. |
 
+### Advanced Settings Explained
+- **Temperature (0.0 to 2.0)**: Controls the creativity of the AI. Lower values (e.g., `0.2`) make the AI focused and factual, perfect for coding or data. Higher values (e.g., `0.9`) make the AI more creative and varied, useful for brainstorming. `0.5` is a balanced default.
+- **Max Tokens**: Acts as a hard limit on the length of the AI's response (1 token ≈ 4 characters). Set to `2048` by default. If the AI cuts off mid-sentence, you can increase this limit to allow for longer responses.
+
 Tap **Start Chatting** to enter the chat screen.
 
 ---
