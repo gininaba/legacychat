@@ -19,24 +19,32 @@ This chatbot is written entirely in **ES5 JavaScript** using `XMLHttpRequest`, `
 
 ## Features
 
-- Multi-turn conversation with full message history
-- 10 model choices via OpenRouter (Claude, GPT-4o, Gemini, Llama, Nemotron)
+### Core Chat Experience
+- **Multi-turn conversation** with full message history
+- **10 model choices** via OpenRouter (Claude, GPT-4o, Gemini, Llama, Nemotron)
 - **Vision/Image Support**: Upload images directly from your camera roll to vision-capable AI models.
-- **System Prompt Personas**: Quickly switch between pre-configured AI personas (e.g., Coding Assistant, Translator) or write your own.
-- iOS-native visual design (system font, blue/white bubbles, iOS-style dialogs)
-- **Dark Mode Support**: Selectable themes (Light and Dark) matching iOS native dark mode aesthetics
-- **Chat History**: Multi-session persistent chat histories saved in `localStorage` with an iOS-native slide-out drawer
+- **System Prompt Personas**: Select pre-configured personas or write and **save your own custom personas** persistently.
+- **Message Actions**: Regenerate AI responses, edit your previous messages, or copy AI text to your clipboard.
+- **Auto-Save Drafts**: Input is saved on every keystroke, preventing accidental data loss if Safari refreshes.
+- **Stop Generation**: Instantly halt long or unwanted AI responses with a dedicated stop button.
+- **Dynamic Chat Titles**: Conversations automatically generate short summarizing titles after the first message.
+- **Token Tracking**: View session token usage live in the navigation bar.
+
+### Organization & Settings
+- **Chat History**: Multi-session persistent chat histories saved in `localStorage` with an iOS-native slide-out drawer.
+- **History Search**: Instantly filter and find past conversations using the built-in search bar.
 - **Export & Import**: Download your chat histories as a JSON file and import them back at any time.
-- **Persistent Settings**: Saves API key, model choice, system prompt, advanced parameters, and theme in `localStorage`
-- **Markdown Rendering**: Custom ES5-compatible parser supporting code blocks, lists, headers, bold, italic, and **syntax highlighting**.
+- **Persistent Settings**: Saves API key, model choice, system prompt, advanced parameters, and theme in `localStorage`.
+- **Dark Mode Support**: Selectable themes (Light and Dark) matching iOS native dark mode aesthetics.
+
+### UI & Polish
+- **iOS-native visual design**: Uses the system font, blue/white bubbles, and iOS-style dialogs.
+- **Advanced Markdown Rendering**: Custom ES5-compatible parser supporting code blocks, lists, headers, **tables**, bold, italic, and **syntax highlighting** for strings/numbers/comments.
 - **Smart Scroll**: A floating "Scroll to Bottom" button appears when reading long messages or navigating history.
+- **Smart Send Button**: Dynamically enabled/disabled based on text content and image attachments.
 - **PWA Ready**: Add to Home Screen for a native app experience with a custom icon and standalone window.
-- **Smart Send Button**: Dynamically enabled/disabled based on text content and image attachments
-- Typing indicator (animated bouncing dots)
-- Auto-growing textarea input
-- Instantly start a new conversation with a single tap
-- Settings screen (accessible from the History drawer) to swap API key, model, or system prompt mid-session
-- Error messages displayed inline as bubbles
+- Typing indicator (animated bouncing dots) and auto-growing textarea input.
+- Error messages displayed inline as bubbles.
 
 ---
 
