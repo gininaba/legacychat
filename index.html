@@ -1790,10 +1790,28 @@
       if (!file) return;
       var reader = new FileReader();
       reader.onload = function(e) {
-        currentImageBase64 = e.target.result;
-        document.getElementById('image-preview').src = currentImageBase64;
-        document.getElementById('image-preview-wrap').style.display = 'block';
-        updateSendButtonState();
+        var img = new Image();
+        img.onload = function() {
+          var maxW = 800;
+          var maxH = 800;
+          var w = img.width;
+          var h = img.height;
+          if (w > maxW || h > maxH) {
+            var ratio = Math.min(maxW / w, maxH / h);
+            w = w * ratio;
+            h = h * ratio;
+          }
+          var canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          currentImageBase64 = canvas.toDataURL('image/jpeg', 0.6);
+          document.getElementById('image-preview').src = currentImageBase64;
+          document.getElementById('image-preview-wrap').style.display = 'block';
+          updateSendButtonState();
+        };
+        img.src = e.target.result;
       };
       reader.readAsDataURL(file);
       event.target.value = '';
@@ -1889,9 +1907,11 @@
       document.getElementById('stop-btn').style.display = 'flex';
 
       var typingRow = showTyping();
+      var currentStreamBubble = null;
+      var currentStreamText = "";
 
       callAPI(function (reply, error) {
-        removeTyping(typingRow);
+        if (typingRow) { removeTyping(typingRow); typingRow = null; }
         isLoading = false;
         updateSendButtonState();
         document.getElementById('stop-btn').style.display = 'none';
@@ -1900,18 +1920,40 @@
 
         if (error) {
           if (error !== 'abort') appendBubble('ai', error, true);
+          else if (currentStreamBubble) {
+             var row = currentStreamBubble.parentNode;
+             row.parentNode.removeChild(row);
+             var cleanedReply = cleanAIResponse(currentStreamText);
+             appendBubble('ai', cleanedReply, false, false, false, cleanedReply);
+             conversationHistory.push({ role: 'assistant', content: cleanedReply });
+             saveCurrentChat();
+             generateTitleIfNeeded();
+          }
         } else {
-          var cleanedReply = cleanAIResponse(reply);
+          if (currentStreamBubble) {
+             var row = currentStreamBubble.parentNode;
+             row.parentNode.removeChild(row);
+          }
+          var cleanedReply = cleanAIResponse(currentStreamText);
           appendBubble('ai', cleanedReply, false, false, false, cleanedReply);
           conversationHistory.push({ role: 'assistant', content: cleanedReply });
           saveCurrentChat();
           generateTitleIfNeeded();
         }
+      }, function(chunk) {
+         if (typingRow) { removeTyping(typingRow); typingRow = null; }
+         if (!currentStreamBubble) {
+             currentStreamBubble = appendBubble('ai', '', false, true, true, undefined);
+             currentStreamText = "";
+         }
+         currentStreamText += chunk;
+         currentStreamBubble.innerHTML = formatMarkdown(currentStreamText);
+         scrollToBottom();
       });
     }
 
     // ─── API CALL (XHR — ES5, iOS 9 compatible) ───
-    function callAPI(callback) {
+    function callAPI(callback, onChunk) {
       var xhr = new XMLHttpRequest();
       xhr.open('POST', 'https://openrouter.ai/api/v1/chat/completions', true);
       xhr.setRequestHeader('Content-Type', 'application/json');
@@ -1934,47 +1976,89 @@
         model: MODEL,
         messages: messages,
         max_tokens: ADVANCED.tokens || 2048,
-        temperature: typeof ADVANCED.temp === 'number' ? ADVANCED.temp : 0.7
+        temperature: typeof ADVANCED.temp === 'number' ? ADVANCED.temp : 0.7,
+        stream: true
       });
 
+      var seenLength = 0;
+      var buffer = "";
+
       xhr.onreadystatechange = function () {
-        if (xhr.readyState !== 4) return;
-        if (xhr.status === 200) {
-          try {
-            var data = JSON.parse(xhr.responseText);
-            if (data.usage && data.usage.total_tokens) {
-              sessionTokens += data.usage.total_tokens;
-              updateTokenDisplay();
-            }
-            if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content !== undefined) {
-              var content = data.choices[0].message.content;
-              callback(content, null);
-            } else {
-              callback(null, 'Invalid response format from API.');
-            }
-          } catch (e) {
-            callback(null, 'Failed to parse response.');
+        if (xhr.readyState === 3 || xhr.readyState === 4) {
+          if (xhr.status !== 200 && xhr.status !== 0 && xhr.readyState === 4) {
+            return;
           }
-        } else if (xhr.status === 0) {
-          callback(null, 'abort');
-        } else {
-          console.log('HTTP Error Status:', xhr.status);
-          console.log('Response headers:', xhr.getAllResponseHeaders());
-          console.log('Response body:', xhr.responseText);
-          var errMsg = 'Error ' + xhr.status;
-          if (xhr.status === 429) {
-            errMsg = 'Rate limit exceeded. Please wait a moment and try again.';
-          } else if (xhr.status === 401) {
-            errMsg = 'Unauthorized. Please check your API key.';
-          } else {
-            try {
-              var errData = JSON.parse(xhr.responseText);
-              if (errData.error && errData.error.message) {
-                errMsg = errData.error.message;
+          if (xhr.status === 200) {
+            var newData = xhr.responseText.substring(seenLength);
+            seenLength = xhr.responseText.length;
+            buffer += newData;
+            
+            var parts = buffer.split('\n\n');
+            buffer = parts.pop() || "";
+            
+            for (var k = 0; k < parts.length; k++) {
+              var chunkLines = parts[k].split('\n');
+              for(var j = 0; j < chunkLines.length; j++) {
+                var line = chunkLines[j].trim();
+                if (line.indexOf('data: ') === 0) {
+                  var jsonStr = line.substring(6);
+                  if (jsonStr === '[DONE]') continue;
+                  try {
+                    var data = JSON.parse(jsonStr);
+                    if (data.usage && data.usage.total_tokens) {
+                      sessionTokens += data.usage.total_tokens;
+                      updateTokenDisplay();
+                    }
+                    if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
+                      var chunk = data.choices[0].delta.content;
+                      if (onChunk) onChunk(chunk);
+                    }
+                  } catch (e) { }
+                }
               }
-            } catch (e) { }
+            }
           }
-          callback(null, errMsg);
+        }
+        
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            if (buffer.trim()) {
+               var remainingLines = buffer.split('\n');
+               for(var b = 0; b < remainingLines.length; b++) {
+                 var rLine = remainingLines[b].trim();
+                 if (rLine.indexOf('data: ') === 0) {
+                   var rJsonStr = rLine.substring(6);
+                   if (rJsonStr !== '[DONE]') {
+                     try {
+                       var rData = JSON.parse(rJsonStr);
+                       if (rData.choices && rData.choices[0] && rData.choices[0].delta && rData.choices[0].delta.content) {
+                         if (onChunk) onChunk(rData.choices[0].delta.content);
+                       }
+                     } catch(e) {}
+                   }
+                 }
+               }
+            }
+            callback(null, null);
+          } else if (xhr.status === 0) {
+            callback(null, 'abort');
+          } else {
+            console.log('HTTP Error Status:', xhr.status);
+            var errMsg = 'Error ' + xhr.status;
+            if (xhr.status === 429) {
+              errMsg = 'Rate limit exceeded. Please wait a moment and try again.';
+            } else if (xhr.status === 401) {
+              errMsg = 'Unauthorized. Please check your API key.';
+            } else {
+              try {
+                var errData = JSON.parse(xhr.responseText);
+                if (errData.error && errData.error.message) {
+                  errMsg = errData.error.message;
+                }
+              } catch (e) { }
+            }
+            callback(null, errMsg);
+          }
         }
       };
 
@@ -2246,8 +2330,11 @@
       document.getElementById('stop-btn').style.display = 'flex';
       
       var typingRow = showTyping();
+      var currentStreamBubble = null;
+      var currentStreamText = "";
+
       callAPI(function (reply, error) {
-        removeTyping(typingRow);
+        if (typingRow) { removeTyping(typingRow); typingRow = null; }
         isLoading = false;
         updateSendButtonState();
         document.getElementById('stop-btn').style.display = 'none';
@@ -2256,12 +2343,33 @@
         
         if (error) {
           if (error !== 'abort') appendBubble('ai', error, true);
+          else if (currentStreamBubble) {
+             var row = currentStreamBubble.parentNode;
+             row.parentNode.removeChild(row);
+             var cleanedReply = cleanAIResponse(currentStreamText);
+             appendBubble('ai', cleanedReply, false, false, false, cleanedReply);
+             conversationHistory.push({ role: 'assistant', content: cleanedReply });
+             saveCurrentChat();
+          }
         } else {
-          var cleanedReply = cleanAIResponse(reply);
+          if (currentStreamBubble) {
+             var row = currentStreamBubble.parentNode;
+             row.parentNode.removeChild(row);
+          }
+          var cleanedReply = cleanAIResponse(currentStreamText);
           appendBubble('ai', cleanedReply, false, false, false, cleanedReply);
           conversationHistory.push({ role: 'assistant', content: cleanedReply });
           saveCurrentChat();
         }
+      }, function(chunk) {
+         if (typingRow) { removeTyping(typingRow); typingRow = null; }
+         if (!currentStreamBubble) {
+             currentStreamBubble = appendBubble('ai', '', false, true, true, undefined);
+             currentStreamText = "";
+         }
+         currentStreamText += chunk;
+         currentStreamBubble.innerHTML = formatMarkdown(currentStreamText);
+         scrollToBottom();
       });
     }
 
@@ -2340,6 +2448,7 @@
       row.appendChild(bubble);
       messagesEl.appendChild(row);
       if (!noScroll) scrollToBottom();
+      return bubble;
     }
 
     function showTyping() {

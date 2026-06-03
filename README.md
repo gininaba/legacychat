@@ -21,8 +21,9 @@ This chatbot is written entirely in **ES5 JavaScript** using `XMLHttpRequest`, `
 
 ### Core Chat Experience
 - **Multi-turn conversation** with full message history
+- **Real-time Streaming**: AI responses stream to the screen character-by-character instantly as they are generated (implemented purely via ES5 `XMLHttpRequest` chunks).
 - **Dynamic Model Fetching**: Access hundreds of models via OpenRouter by clicking "Refresh Models", with 10 sensible default models built-in.
-- **Vision/Image Support**: Upload images directly from your camera roll to vision-capable AI models.
+- **Vision/Image Support**: Upload images directly from your camera roll to vision-capable AI models. Images are automatically compressed locally via a hidden `<canvas>` to prevent `localStorage` limits.
 - **System Prompt Personas**: Select pre-configured personas or write and **save your own custom personas** persistently.
 - **Message Actions**: Regenerate AI responses, edit your previous messages, delete specific messages, or copy AI text to your clipboard.
 - **Auto-Save Drafts**: Input is saved on every keystroke, preventing accidental data loss if Safari refreshes.
