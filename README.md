@@ -21,13 +21,17 @@ This chatbot is written entirely in **ES5 JavaScript** using `XMLHttpRequest`, `
 
 - Multi-turn conversation with full message history
 - 10 model choices via OpenRouter (Claude, GPT-4o, Gemini, Llama, Nemotron)
-- Configurable system prompt
+- **Vision/Image Support**: Upload images directly from your camera roll to vision-capable AI models.
+- **System Prompt Personas**: Quickly switch between pre-configured AI personas (e.g., Coding Assistant, Translator) or write your own.
 - iOS-native visual design (system font, blue/white bubbles, iOS-style dialogs)
 - **Dark Mode Support**: Selectable themes (Light and Dark) matching iOS native dark mode aesthetics
 - **Chat History**: Multi-session persistent chat histories saved in `localStorage` with an iOS-native slide-out drawer
-- **Persistent Settings**: Saves API key, model choice, system prompt, and theme in `localStorage`
-- **Markdown Rendering**: Custom ES5-compatible parser supporting code blocks, lists, headers, bold, and italic in AI responses
-- **Smart Send Button**: Dynamically enabled/disabled based on text content
+- **Export & Import**: Download your chat histories as a JSON file and import them back at any time.
+- **Persistent Settings**: Saves API key, model choice, system prompt, advanced parameters, and theme in `localStorage`
+- **Markdown Rendering**: Custom ES5-compatible parser supporting code blocks, lists, headers, bold, italic, and **syntax highlighting**.
+- **Smart Scroll**: A floating "Scroll to Bottom" button appears when reading long messages or navigating history.
+- **PWA Ready**: Add to Home Screen for a native app experience with a custom icon and standalone window.
+- **Smart Send Button**: Dynamically enabled/disabled based on text content and image attachments
 - Typing indicator (animated bouncing dots)
 - Auto-growing textarea input
 - Instantly start a new conversation with a single tap
@@ -82,8 +86,9 @@ When you open the app, you'll see the setup screen:
 |---|---|
 | **API Key** | Your OpenRouter key (`sk-or-v1-...`) |
 | **Model** | Choose from the 10 available models (see below) |
-| **System Prompt** | Optional instruction that shapes the AI's behavior. Defaults to `You are a helpful assistant.` |
+| **Persona / System Prompt** | Select a pre-configured persona or choose "Custom..." to write your own behavior instructions. |
 | **Theme** | Select between Light Mode and Dark Mode. |
+| **Advanced** | Expandable section to tweak AI Temperature and Max Tokens for fine-grained control. |
 
 Tap **Start Chatting** to enter the chat screen.
 
@@ -141,20 +146,6 @@ Add a new `<option>` inside `<select id="model-select">` using any model slug fr
 ```html
 <option value="mistralai/mistral-7b-instruct">Mistral 7B</option>
 ```
-
-### Change the default system prompt
-
-Find this line in the `startChat()` function:
-
-```javascript
-SYSTEM_PROMPT = sys || 'You are a helpful assistant.';
-```
-
-Replace the fallback string with whatever persona or instruction you want.
-
-### Adjust max response length
-
-Find `max_tokens: 2048` inside the `callAPI()` function and change the value.
 
 ---
 
