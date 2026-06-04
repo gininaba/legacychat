@@ -22,8 +22,8 @@ This chatbot is written entirely in **ES5 JavaScript** using `XMLHttpRequest`, `
 ### Core Chat Experience
 - **Multi-turn conversation** with full message history
 - **Real-time Streaming**: AI responses stream to the screen character-by-character instantly as they are generated (implemented purely via ES5 `XMLHttpRequest` chunks).
-- **Dynamic Model Fetching**: Access hundreds of models via OpenRouter by clicking "Refresh Models", with 10 sensible default models built-in.
-- **Vision/Image Support**: Upload images directly from your camera roll to vision-capable AI models. Images are automatically compressed locally via a hidden `<canvas>` to prevent `localStorage` limits.
+- **Dynamic Model Fetching**: Access hundreds of models via OpenRouter by clicking "Refresh Models", with 10 sensible default models built-in and a real-time **Model Search filter** to find options instantly.
+- **Vision/Image Support**: Upload images directly from your camera roll to vision-capable AI models. Images are automatically compressed locally via a hidden `<canvas>` to prevent `localStorage` limits. Additionally, **older images are dynamically stripped** from history when saving to protect the 5MB browser quota.
 - **System Prompt Personas**: Select pre-configured personas or write and **save your own custom personas** persistently.
 - **Message Actions**: Regenerate AI responses, edit your previous messages, delete specific messages, or copy AI text to your clipboard.
 - **Auto-Save Drafts**: Input is saved on every keystroke, preventing accidental data loss if Safari refreshes.
@@ -36,17 +36,19 @@ This chatbot is written entirely in **ES5 JavaScript** using `XMLHttpRequest`, `
 - **History Search**: Instantly filter and find past conversations using the built-in search bar.
 - **Export & Import**: Download your chat histories as a JSON file and import them back at any time.
 - **Persistent Settings**: Saves API key, model choice, system prompt, advanced parameters, and theme in `localStorage`.
+- **Storage Quota Fallback**: Gracefully handles `QuotaExceededError` browser limitations and prompts the user with recovery steps.
 - **Dark Mode Support**: Selectable themes (Light and Dark) matching iOS native dark mode aesthetics.
 
 ### UI & Polish
 - **iOS-native visual design**: Uses the system font, blue/white bubbles, and iOS-style dialogs.
-- **Advanced Markdown Rendering**: Custom ES5-compatible parser supporting code blocks, lists, headers, **tables**, bold, italic, and **syntax highlighting** for strings/numbers/comments.
+- **Advanced Markdown Rendering**: Custom ES5-compatible parser supporting code blocks, lists, headers, **tables (with GFM delimiter parsing)**, bold, italic, and **syntax highlighting** for strings/numbers/comments.
+- **HTML Sanitization**: Features a lightweight native sanitizer that strips dynamic `<script>`, `<iframe>`, link, and style tags as well as DOM event handlers (e.g., `onload`, `onerror`) to protect against XSS injections.
 - **Smart Scroll**: A floating "Scroll to Bottom" button appears when reading long messages or navigating history.
 - **Smart Send Button**: Dynamically enabled/disabled based on text content and image attachments.
 - **PWA Ready**: Add to Home Screen for a native app experience with a custom icon and standalone window.
 - **Responsive Layout**: Looks great on mobile and tablet, with a centered max-width constraint for comfortable reading on ultra-wide desktop monitors.
-- Typing indicator (animated bouncing dots) and auto-growing textarea input.
-- Error messages displayed inline as bubbles, with clear explanations for rate limits and authorization errors.
+- **Typing indicator**: Animated bouncing dots and auto-growing textarea input.
+- **Error bubbles**: Error messages displayed inline as bubbles, with clear explanations for rate limits and authorization errors.
 
 ---
 

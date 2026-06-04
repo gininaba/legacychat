@@ -1128,6 +1128,8 @@
         <button onclick="refreshModels()" style="background:none; border:none; color:#007aff; font-size:12px; font-weight:600; cursor:pointer; -webkit-appearance:none;">Refresh Models</button>
       </div>
       <div class="field-group" id="group-model">
+        <input type="text" id="model-filter" placeholder="Search models..." oninput="filterModels()" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" onfocus="focusField('group-model')" onblur="blurField('group-model')" style="border: none; padding: 13px 14px; width: 100%; outline: none; font-size: 16px; background: transparent; color: inherit;">
+        <div class="field-divider"></div>
         <select id="model-select" onfocus="focusField('group-model')" onblur="blurField('group-model')">
           <option value="anthropic/claude-3-haiku">Claude 3 Haiku (Fast)</option>
           <option value="anthropic/claude-3.5-sonnet" selected>Claude 3.5 Sonnet</option>
@@ -1296,10 +1298,23 @@
     var currentXHR = null;
     var sessionTokens = 0;
     var customPersonas = [];
+    var allModels = [
+      { id: "anthropic/claude-3-haiku", name: "Claude 3 Haiku (Fast)" },
+      { id: "anthropic/claude-3.5-sonnet", name: "Claude 3.5 Sonnet" },
+      { id: "anthropic/claude-3-opus", name: "Claude 3 Opus" },
+      { id: "openai/gpt-4o-mini", name: "GPT-4o Mini" },
+      { id: "openai/gpt-4o", name: "GPT-4o" },
+      { id: "google/gemini-3.5-flash", name: "Gemini 3.5 Flash" },
+      { id: "google/gemini-3.1-flash-lite", name: "Gemini 3.1 Flash Lite" },
+      { id: "meta-llama/llama-3.2-3b-instruct:free", name: "Llama 3.2 3B (Free)" },
+      { id: "meta-llama/llama-3.3-70b-instruct:free", name: "Llama 3.3 70B (Free)" },
+      { id: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free", name: "Nemotron 3 Nano Omni (Free)" }
+    ];
 
     // ─── LOCAL STORAGE & INITIAL LOAD ───
     window.onload = function () {
       try {
+        renderModels("");
         var storedKey = localStorage.getItem('api_key');
         var storedModel = localStorage.getItem('model');
         var storedPrompt = localStorage.getItem('system_prompt');
@@ -1357,9 +1372,39 @@
       }
     }
 
+    function safeLocalStorageSetItem(key, value) {
+      try {
+        localStorage.setItem(key, value);
+        return true;
+      } catch (e) {
+        if (e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || e.code === 22 || e.number === 0x80530014)) {
+          alert("Storage Limit Exceeded: LegacyChat cannot save history or settings because the browser's storage is full.\n\nPlease export your history, clear old conversations, or delete large images/chats to free up space.");
+        } else {
+          console.log("localStorage error:", e);
+        }
+        return false;
+      }
+    }
+
     function saveChatsToStorage() {
       try {
-        localStorage.setItem('chats', JSON.stringify(chats));
+        var cleanChats = JSON.parse(JSON.stringify(chats));
+        for (var i = 0; i < cleanChats.length; i++) {
+          if (cleanChats[i].id !== currentChatId) {
+            var msgs = cleanChats[i].messages;
+            for (var j = 0; j < msgs.length; j++) {
+              var msg = msgs[j];
+              if (Array.isArray(msg.content)) {
+                for (var k = 0; k < msg.content.length; k++) {
+                  if (msg.content[k].type === 'image_url' && msg.content[k].image_url) {
+                    msg.content[k].image_url.url = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100' height='100' fill='%23e5e5ea'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='10' fill='%238e8e93'>Image Cleared</text></svg>";
+                  }
+                }
+              }
+            }
+          }
+        }
+        safeLocalStorageSetItem('chats', JSON.stringify(cleanChats));
       } catch (e) { }
     }
 
@@ -1559,9 +1604,7 @@
       } else {
         document.body.className = '';
       }
-      try {
-        localStorage.setItem('theme', theme);
-      } catch (e) { }
+      safeLocalStorageSetItem('theme', theme);
     }
 
     function filterHistory() {
@@ -1603,7 +1646,7 @@
       if (!prompt) return;
       var name = prompt.substring(0, 20) + '...';
       customPersonas.push({ name: name, prompt: prompt });
-      try { localStorage.setItem('custom_personas', JSON.stringify(customPersonas)); } catch(e){}
+      safeLocalStorageSetItem('custom_personas', JSON.stringify(customPersonas));
       renderCustomPersonas();
       document.getElementById('persona-select').value = prompt;
       handlePersonaChange();
@@ -1682,7 +1725,7 @@
       var newH = Math.min(this.scrollHeight, maxH);
       this.style.height = newH + 'px';
       if (currentChatId) {
-        localStorage.setItem('draft_' + currentChatId, this.value);
+        safeLocalStorageSetItem('draft_' + currentChatId, this.value);
       }
       updateSendButtonState();
     });
@@ -1731,14 +1774,12 @@
       MODEL = model;
       SYSTEM_PROMPT = sys || 'You are a helpful assistant.';
 
-      try {
-        localStorage.setItem('api_key', key);
-        localStorage.setItem('model', model);
-        localStorage.setItem('persona_select', personaVal);
-        if (personaVal === 'custom') localStorage.setItem('system_prompt', sys);
-        localStorage.setItem('temp', ADVANCED.temp);
-        localStorage.setItem('tokens', ADVANCED.tokens);
-      } catch (e) { }
+      safeLocalStorageSetItem('api_key', key);
+      safeLocalStorageSetItem('model', model);
+      safeLocalStorageSetItem('persona_select', personaVal);
+      if (personaVal === 'custom') safeLocalStorageSetItem('system_prompt', sys);
+      safeLocalStorageSetItem('temp', ADVANCED.temp);
+      safeLocalStorageSetItem('tokens', ADVANCED.tokens);
 
       document.getElementById('setup-screen').style.display = 'none';
       var chatEl = document.getElementById('chat-screen');
@@ -2130,6 +2171,19 @@
       return text;
     }
 
+    function sanitizeHTML(htmlString) {
+      if (!htmlString) return htmlString;
+      // 1. Remove script tags and their contents
+      var clean = htmlString.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+      // 2. Remove other dangerous tags
+      clean = clean.replace(/<(iframe|object|embed|form|meta|link|style)[^>]*>/gi, '');
+      // 3. Remove event handlers like onload, onerror, onclick, etc.
+      clean = clean.replace(/\b(on[a-z]+)\s*=\s*(['"][^'"]*['"]|[^\s>]+)/gi, '');
+      // 4. Remove javascript: pseudos in href/src
+      clean = clean.replace(/\b(href|src)\s*=\s*['"]\s*javascript:[^'"]*['"]/gi, '');
+      return clean;
+    }
+
     function escapeHTML(str) {
       return str.replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -2207,6 +2261,16 @@
           var listType = '';
           var resultHTML = '';
           var currentPara = '';
+          var tableRowIndex = -1;
+
+          // Check if there is a valid delimiter row anywhere in this block
+          var hasDelimiterRow = false;
+          for (var idx = 0; idx < lines.length; idx++) {
+            if (lines[idx].trim().match(/^\|[-:| ]+\|$/)) {
+              hasDelimiterRow = true;
+              break;
+            }
+          }
 
           for (var l = 0; l < lines.length; l++) {
             var line = lines[l].trim();
@@ -2222,15 +2286,21 @@
               
               if (!isTable) {
                 isTable = true;
+                tableRowIndex = 0;
                 resultHTML += '<table><tbody>';
+              } else {
+                tableRowIndex++;
               }
               // Skip the separator row like |---|---|
-              if (line.match(/^\|[-:| ]+\|$/)) continue;
+              if (line.match(/^\|[-:| ]+\|$/)) {
+                tableRowIndex--;
+                continue;
+              }
               
               var cells = line.substring(1, line.length - 1).split('|');
               resultHTML += '<tr>';
               for(var c=0; c<cells.length; c++) {
-                var isHeader = (l === 0 || (l === 1 && lines[0].indexOf('|')===0));
+                var isHeader = hasDelimiterRow && (tableRowIndex === 0);
                 var cellType = isHeader ? 'th' : 'td';
                 resultHTML += '<' + cellType + '>' + cells[c].trim() + '</' + cellType + '>';
               }
@@ -2240,7 +2310,7 @@
                 resultHTML += '<p>' + currentPara + '</p>';
                 currentPara = '';
               }
-              if (isTable) { resultHTML += '</tbody></table>'; isTable = false; }
+              if (isTable) { resultHTML += '</tbody></table>'; isTable = false; tableRowIndex = -1; }
               if (!isList) {
                 isList = true;
                 listType = isBullet ? 'ul' : 'ol';
@@ -2368,7 +2438,7 @@
              currentStreamText = "";
          }
          currentStreamText += chunk;
-         currentStreamBubble.innerHTML = formatMarkdown(currentStreamText);
+         currentStreamBubble.innerHTML = sanitizeHTML(formatMarkdown(currentStreamText));
          scrollToBottom();
       });
     }
@@ -2400,9 +2470,9 @@
       bubble.className = 'bubble' + (isError ? ' error' : '');
 
       if (role === 'ai' && !isError) {
-        bubble.innerHTML = formatMarkdown(text);
+        bubble.innerHTML = sanitizeHTML(formatMarkdown(text));
       } else if (isRawHtml) {
-        bubble.innerHTML = text;
+        bubble.innerHTML = sanitizeHTML(text);
       } else {
         // simple newline → <br>
         var parts = text.split('\n');
@@ -2512,6 +2582,39 @@
       hideClearConfirm();
     }
 
+    function renderModels(filterText) {
+      var select = document.getElementById('model-select');
+      var currentVal = select.value || MODEL || localStorage.getItem('model') || "anthropic/claude-3.5-sonnet";
+      select.innerHTML = '';
+      
+      var query = filterText ? filterText.toLowerCase() : "";
+      var foundCurrent = false;
+
+      for (var i = 0; i < allModels.length; i++) {
+        var m = allModels[i];
+        if (query && m.name.toLowerCase().indexOf(query) === -1 && m.id.toLowerCase().indexOf(query) === -1) {
+          continue;
+        }
+        var opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = m.name;
+        if (m.id === currentVal) {
+          opt.selected = true;
+          foundCurrent = true;
+        }
+        select.appendChild(opt);
+      }
+      
+      if (!foundCurrent && select.options.length > 0) {
+        select.options[0].selected = true;
+      }
+    }
+
+    function filterModels() {
+      var q = document.getElementById('model-filter').value;
+      renderModels(q);
+    }
+
     function refreshModels() {
       var btn = document.querySelector('button[onclick="refreshModels()"]');
       if (btn) btn.textContent = 'Loading...';
@@ -2523,27 +2626,17 @@
           if (xhr.status === 200) {
             try {
               var data = JSON.parse(xhr.responseText);
-              var select = document.getElementById('model-select');
-              var currentVal = select.value;
-              select.innerHTML = '';
-              data.data.sort(function(a,b){return a.name.localeCompare(b.name);});
+              var newModels = [];
               for (var i = 0; i < data.data.length; i++) {
-                var opt = document.createElement('option');
-                opt.value = data.data[i].id;
-                opt.textContent = data.data[i].name;
-                select.appendChild(opt);
+                newModels.push({ id: data.data[i].id, name: data.data[i].name });
               }
-              var found = false;
-              for (var j = 0; j < select.options.length; j++) {
-                if (select.options[j].value === currentVal) {
-                  select.options[j].selected = true;
-                  found = true;
-                  break;
-                }
-              }
-              if (!found && select.options.length > 0) {
-                select.options[0].selected = true;
-              }
+              newModels.sort(function(a, b) {
+                return a.name.localeCompare(b.name);
+              });
+              allModels = newModels;
+              
+              var filterVal = document.getElementById('model-filter').value;
+              renderModels(filterVal);
             } catch(e) {
               alert('Failed to parse models.');
             }
