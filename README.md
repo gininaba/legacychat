@@ -56,15 +56,15 @@ This chatbot is written entirely in **ES5 JavaScript** using `XMLHttpRequest`, `
 
 | Chat Interface | Chat History |
 | :---: | :---: |
-| ![Chat](Screenshots/S5%20-%20Chat.png) | ![Chat History](Screenshots/S6%20-%20Chat%20History.png) |
+| ![Chat](Screenshots/Chat.png) | ![Chat History](Screenshots/ChatHistory.png) |
 
 | AI Models | Persona Selection |
 | :---: | :---: |
-| ![AI Models](Screenshots/S2%20-%20AI%20Models.png) | ![Persona](Screenshots/S3%20-%20Persona.png) |
+| ![AI Models](Screenshots/Models.png) | ![Persona](Screenshots/Persona.png) |
 
-| Setup Screen | Theme (Dark Mode) |
+| Setup Screen | Theme (Light Mode) |
 | :---: | :---: |
-| ![Setup Screen](Screenshots/S1.png) | ![Theme](Screenshots/S4%20-%20Theme.png) |
+| ![Setup Screen](Screenshots/SetupScreen.png) | ![Theme](Screenshots/LightTheme.png) |
 
 ---
 
