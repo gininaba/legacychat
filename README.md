@@ -1,8 +1,29 @@
+<div align="center">
+
 # LegacyChat — iOS 9 Compatible Chatbot
 
 A single-file AI chatbot built specifically for **iPad Mini 1st Gen (iOS 9.3.6)**. Most modern AI chat interfaces rely on APIs and JavaScript features that Safari on iOS 9 does not support. This project works around every one of those limitations.
 
----
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+[![JavaScript ES5](https://img.shields.io/badge/JavaScript-ES5-f7df1e.svg?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/HTML)
+[![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/CSS)
+[![OpenRouter](https://img.shields.io/badge/AI-OpenRouter-000000.svg?style=for-the-badge)](https://openrouter.ai/)
+[![Vercel](https://img.shields.io/badge/Hosted_on-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)
+
+[Why This Exists](#why-this-exists) · [What You Get](#what-you-get) · [Quick Start](#quick-start) · [Screenshots](#screenshots) · [Models](#available-models)
+
+</div>
+
+<div align="center">
+  <img src="Screenshots/Chat.png" alt="LegacyChat Interface" width="700">
+</div>
+
+<a id="setup-screen"></a>
+
+<div align="center">
+  <img src="Screenshots/SetupScreen.png" alt="LegacyChat Setup Screen" width="700">
+</div>
 
 ## Why This Exists
 
@@ -15,9 +36,7 @@ iOS 9.3.6 Safari is a 2016-era WebKit browser. It lacks:
 
 This chatbot is written entirely in **ES5 JavaScript** using `XMLHttpRequest`, `-webkit-` prefixed CSS, and zero dependencies — no bundler, no npm, no build step.
 
----
-
-## Features
+## What You Get
 
 ### Core Chat Experience
 - **Multi-turn conversation** with full message history
@@ -50,38 +69,7 @@ This chatbot is written entirely in **ES5 JavaScript** using `XMLHttpRequest`, `
 - **Typing indicator**: Animated bouncing dots and auto-growing textarea input.
 - **Error bubbles**: Error messages displayed inline as bubbles, with clear explanations for rate limits and authorization errors.
 
----
-
-## Screenshots
-
-| Chat Interface | Chat History |
-| :---: | :---: |
-| ![Chat](Screenshots/Chat.png) | ![Chat History](Screenshots/ChatHistory.png) |
-
-| AI Models | Persona Selection |
-| :---: | :---: |
-| ![AI Models](Screenshots/Models.png) | ![Persona](Screenshots/Persona.png) |
-
-| Setup Screen | Theme (Light Mode) |
-| :---: | :---: |
-| ![Setup Screen](Screenshots/SetupScreen.png) | ![Theme](Screenshots/LightTheme.png) |
-
----
-
-## Tech Stack
-
-| Layer | Choice | Reason |
-|---|---|---|
-| Language | ES5 JavaScript | Only JS standard iOS 9 Safari fully supports |
-| HTTP | `XMLHttpRequest` | `fetch()` is unsupported on iOS 9 |
-| CSS | Flexbox + `-webkit-` prefixes | CSS Grid and custom properties have poor iOS 9 support |
-| API | OpenRouter | One API key, access to multiple AI models |
-| Hosting | Vercel (static) | Solves CORS; `file://` origin blocks API requests |
-| Structure | Single `index.html` | No build process, no dependencies |
-
----
-
-## Setup & Deployment
+## Quick Start
 
 ### 1. Get an OpenRouter API Key
 
@@ -104,8 +92,6 @@ This chatbot is written entirely in **ES5 JavaScript** using `XMLHttpRequest`, `
 2. Navigate to your Vercel URL
 3. (Optional) Tap the share icon → **Add to Home Screen** for an app-like experience
 
----
-
 ## First-Time Configuration
 
 When you open the app, you'll see the setup screen:
@@ -124,8 +110,6 @@ When you open the app, you'll see the setup screen:
 
 Tap **Start Chatting** to enter the chat screen.
 
----
-
 ## Available Models
 
 | Model | Best For |
@@ -143,27 +127,53 @@ Tap **Start Chatting** to enter the chat screen.
 
 You can switch models anytime by tapping **Settings** in the top-left corner. You can also click **Refresh Models** to dynamically fetch the latest available models from OpenRouter.
 
----
+## Screenshots
 
-## Project Structure
+| Chat History | AI Models |
+| :---: | :---: |
+| ![Chat History](Screenshots/ChatHistory.png) | ![AI Models](Screenshots/Models.png) |
 
-```
-/
-└── index.html    ← entire application (HTML + CSS + JS)
-└── README.md
-```
+| Persona Selection | Theme (Light Mode) |
+| :---: | :---: |
+| ![Persona](Screenshots/Persona.png) | ![Theme](Screenshots/LightTheme.png) |
 
-No `package.json`, no `/src`, no build artifacts. The entire app is one file.
+## Star History
 
----
+<div align="center">
+  <a href="https://star-history.com/#gininaba/legacychat&Date">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=gininaba/legacychat&type=Date&theme=dark">
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=gininaba/legacychat&type=Date">
+      <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=gininaba/legacychat&type=Date" width="700">
+    </picture>
+  </a>
+</div>
+
+## Tech Stack
+
+| Layer | Choice | Reason |
+|---|---|---|
+| Language | ES5 JavaScript | Only JS standard iOS 9 Safari fully supports |
+| HTTP | `XMLHttpRequest` | `fetch()` is unsupported on iOS 9 |
+| CSS | Flexbox + `-webkit-` prefixes | CSS Grid and custom properties have poor iOS 9 support |
+| API | OpenRouter | One API key, access to multiple AI models |
+| Hosting | Vercel (static) | Solves CORS; `file://` origin blocks API requests |
+| Structure | Single `index.html` | No build process, no dependencies |
+
+## Browser Compatibility
+
+| Browser | Supported |
+|---|---|
+| Safari iOS 9.3.6 (iPad Mini 1st Gen) | ✅ Yes — primary target |
+| Safari iOS 10+ | ✅ Yes |
+| Chrome / Firefox (modern) | ✅ Yes |
+| IE 11 | ❌ No (`XMLHttpRequest` usage differs) |
 
 ## Security Note
 
 Your API key is entered at runtime in the browser and sent directly to OpenRouter's API. It is **never stored on any server** — it only lives in the page's memory for the duration of your session.
 
 However, since this is a client-side app, anyone who has your Vercel URL can open the setup screen and use their own key — or yours if you share it. For personal use on your own device, this is fine. If you want to restrict access, Vercel supports password protection under **Project Settings → Password Protection** (requires a Pro plan).
-
----
 
 ## Customization
 
@@ -178,19 +188,6 @@ Add a new `<option>` inside `<select id="model-select">` using any model slug fr
 ```html
 <option value="mistralai/mistral-7b-instruct">Mistral 7B</option>
 ```
-
----
-
-## Browser Compatibility
-
-| Browser | Supported |
-|---|---|
-| Safari iOS 9.3.6 (iPad Mini 1st Gen) | ✅ Yes — primary target |
-| Safari iOS 10+ | ✅ Yes |
-| Chrome / Firefox (modern) | ✅ Yes |
-| IE 11 | ❌ No (`XMLHttpRequest` usage differs) |
-
----
 
 ## License
 
