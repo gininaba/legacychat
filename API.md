@@ -1,44 +1,45 @@
 # API Integration & Streaming Guide
 
-This document describes how LegacyChat interacts with external API endpoints to fetch model indexes, complete chat payloads, and stream tokens progressively using standard ES5 `XMLHttpRequest` techniques compatible with early browser environments.
+This document describes how LegacyChat connects to public **OpenRouter** API endpoints, formats text and multimodal vision payloads, and processes streaming responses using ES5 `XMLHttpRequest` techniques compatible with early browser engines (specifically iOS 9 Safari).
 
 ---
 
-## 1. Endpoints Reference
+## 1. Public Endpoints Reference
 
-LegacyChat connects directly to the following public **OpenRouter** API endpoints:
+LegacyChat connects directly from the browser to the following public endpoints:
 
 ### A. List Available Models
-- **Protocol / Method**: `GET`
+- **Method**: `GET`
 - **URL**: `https://openrouter.ai/api/v1/models`
 - **Authentication**: None required (public endpoint)
-- **Role**: Refreshes the local dropdown options with all available models on OpenRouter, sorted alphabetically.
+- **Role**: Refreshes local model dropdown options dynamically, sorting models alphabetically.
 
-### B. Chat Completion (with Streaming)
-- **Protocol / Method**: `POST`
+### B. Chat Completions (with SSE Streaming)
+- **Method**: `POST`
 - **URL**: `https://openrouter.ai/api/v1/chat/completions`
 - **Authentication**: Bearer Token (`Authorization: Bearer <API_KEY>`)
-- **Role**: Submits conversation history and parameters to return AI answers.
+- **Role**: Transmits conversation history and parameters to stream AI completions token by token.
 
 ---
 
-## 2. HTTP Headers
+## 2. Request HTTP Headers
 
-To satisfy security, CORS requirements, and OpenRouter rankings, the following headers are appended to all write operations:
+The following headers are attached to completion write operations to satisfy security, CORS requirements, and OpenRouter rankings:
 
 ```http
 Content-Type: application/json
 Authorization: Bearer sk-or-v1-xxxxxxxxxxxxxxxxxxxxxxx
-HTTP-Referer: http://localhost:3000/ (or your deployed URL)
+HTTP-Referer: http://localhost:3000/ (or active deployed URL)
 X-Title: LegacyChat iPad
 ```
 
-*Note: The `HTTP-Referer` and `X-Title` headers allow your app to be recognized properly on the OpenRouter dashboard and analytics pages.*
+*Note: `HTTP-Referer` and `X-Title` enable proper app branding and analytics breakdown on the OpenRouter dashboard.*
 
 ---
 
 ## 3. Request Payload Specifications
 
+### Standard Text Payload
 ```json
 {
   "model": "anthropic/claude-3.5-sonnet",
@@ -52,8 +53,8 @@ X-Title: LegacyChat iPad
 }
 ```
 
-### Vision Support (Multimodal Inputs)
-If the user attaches an image, the message payload transforms to an array structure:
+### Vision Multimodal Payload (Image Uploads)
+When a camera photo is attached, the user message converts to a multimodal array containing optimized JPEG Base64 data:
 
 ```json
 {
@@ -61,7 +62,7 @@ If the user attaches an image, the message payload transforms to an array struct
   "content": [
     {
       "type": "text",
-      "text": "Describe this image."
+      "text": "Describe the contents of this image in detail."
     },
     {
       "type": "image_url",
@@ -75,59 +76,54 @@ If the user attaches an image, the message payload transforms to an array struct
 
 ---
 
-## 4. ES5 Streaming Implementation Details
+## 4. ES5 Streaming & 60ms Render Throttling Architecture
 
-Modern apps use the `fetch` API and read stream blocks via `ReadableStream` chunks. Because iOS 9 Safari lacks `fetch` and `ReadableStream`, LegacyChat implements streaming purely using `XMLHttpRequest` status events (`readyState === 3` for loading):
+Modern web apps use `fetch()` and `ReadableStream`. Because iOS 9 Safari lacks both `fetch` and `ReadableStream`, LegacyChat implements streaming using `XMLHttpRequest` state change events (`readyState === 3` for LOADING and `readyState === 4` for DONE):
 
 ```mermaid
 sequenceDiagram
     participant UI as Browser UI
+    participant Buffer as Sliding Window Buffer
+    participant Render as 60ms Throttled Renderer
     participant XHR as XMLHttpRequest (readyState 3)
     participant OR as OpenRouter API
 
     UI->>OR: POST /chat/completions (stream: true)
-    loop While receiving chunks
-        OR-->>XHR: Send raw SSE stream text
-        XHR->>UI: Trigger onreadystatechange
-        Note over UI: Calculate newData = responseText.substring(seenLength)
-        Note over UI: Split by "\n\n" and parse JSON line "data: {...}"
-        UI->>UI: Append content delta to bubble HTML
+    loop SSE Chunks Transmission
+        OR-->>XHR: Send raw SSE chunks ("data: {...}\n\n")
+        XHR->>Buffer: Calculate responseText.substring(seenLength)
+        Buffer->>Buffer: Extract JSON deltas & append to currentStreamText
+        loop Every 60ms Timer (~16fps)
+            Render->>UI: Execute formatMarkdown() & update bubble innerHTML
+            Render->>UI: scrollToBottom()
+        end
     end
     OR-->>XHR: data: [DONE]
-    XHR->>UI: state change (readyState 4)
-    Note over UI: Store final chat thread in localStorage
+    XHR->>Render: Finalize formatMarkdown() & clear timer
+    Render->>UI: Store finalized thread in localStorage
 ```
 
-### Chunk Processing Logic
-The algorithm handles fragmented payloads by keeping a sliding buffer:
-1. `seenLength` stores the index of text processed so far.
-2. In `readyState 3` (LOADING) or `readyState 4` (DONE), it retrieves the newly arrived characters:
+### Buffer Extraction Algorithm
+1. `seenLength` stores character count processed so far.
+2. On `readyState 3` or `4`, newly arrived text is sliced:
    ```javascript
    var newData = xhr.responseText.substring(seenLength);
    seenLength = xhr.responseText.length;
    buffer += newData;
    ```
-3. The buffer splits on double newlines (`\n\n`), leaving any trailing, incomplete block in the buffer.
-4. Each segment is stripped of the `data: ` prefix, parsed as JSON, and the content updates the bubble:
-   ```javascript
-   if (line.indexOf('data: ') === 0) {
-     var jsonStr = line.substring(6);
-     if (jsonStr !== '[DONE]') {
-       var data = JSON.parse(jsonStr);
-       var chunk = data.choices[0].delta.content;
-       onChunk(chunk);
-     }
-   }
-   ```
+3. Segments split on double newlines (`\n\n`), leaving trailing partial lines in the buffer.
+4. Segments stripped of `data: ` prefix are parsed as JSON objects to update aggregate `sessionTokens` and append delta content strings to `currentStreamText`.
+5. **60ms Render Timer**: A 60ms `setInterval` periodically updates the active DOM bubble innerHTML with `sanitizeHTML(formatMarkdown(currentStreamText))`, delivering smooth visual generation without CPU thrashing on Apple A5 dual-core processors.
 
 ---
 
-## 5. Error & Limits Strategy
+## 5. Comprehensive Error & Quota Handling Matrix
 
-| Error Condition | HTTP Status Code | Resolution Flow |
-|---|---|---|
-| **Unauthorized** | `401` | Displays inline warning: *"Unauthorized. Please check your API key."* |
-| **Rate Limits** | `429` | Displays: *"Rate limit exceeded. Please wait a moment and try again."* |
-| **Quota Limits** | `500+` or `402` | Renders the exact error message string returned by the provider. |
-| **Timeout (60s)** | Timeout trigger | Triggers `xhr.ontimeout` to prompt network verification. |
-| **Local Full** | `QuotaExceededError` | Catches browser storage bounds, alerting the user to run history maintenance. |
+| Error Condition | HTTP Code / Trigger | User Interface Alert / Message | Remediation Action |
+|---|---|---|---|
+| **Unauthorized** | `401` | *"Unauthorized. Please check your API key."* | Prompt user to verify OpenRouter API key in Settings. |
+| **Rate Limit Exceeded** | `429` | *"Rate limit exceeded. Please wait a moment and try again."* | Wait briefly before retrying request. |
+| **Credit / Quota Limit** | `402` or `400` | Extracts provider error (e.g. *"This request requires more credits, or fewer max_tokens..."*) | Lower `Max Tokens` in Settings (e.g. `80`), switch to a Free model preset, or add OpenRouter credits. |
+| **Request Timeout** | `xhr.ontimeout` (60s) | *"Request timed out. Please check your connection and try again."* | Check device WiFi network or select a faster model (e.g. Claude 3 Haiku). |
+| **Network Error** | `xhr.onerror` | *"Network error. Check your connection."* | Verify URL connectivity or tunnel server. |
+| **Local Storage Full** | `QuotaExceededError` | *"Storage Limit Exceeded: LegacyChat cannot save history..."* | Prompt user to run **Clear All** or **Export** history in History Drawer. |

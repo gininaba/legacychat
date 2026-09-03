@@ -1,54 +1,54 @@
 # Contributing to LegacyChat
 
-Thank you for your interest in improving LegacyChat! Contributions from the community help make this project more robust, feature-rich, and compatible.
+Thank you for helping improve LegacyChat! Contributions from the community ensure this application remains performant, feature-rich, and compatible with legacy WebKit browsers.
 
-This document outlines the guidelines and policies for contributing to the repository. Please review them before submitting changes.
-
----
-
-## 1. Ground Rules
-
-- **Strict Client-Side / Single-File Constraint**: LegacyChat is, and must remain, a single self-contained `index.html` file. Do not introduce preprocessors, compilers (Babel, Sass), package managers (npm dependencies), or modular JavaScript builders.
-- **Backwards Compatibility First**: The core objective of this project is compatibility with iOS 9.3.6 Safari on iPad Mini 1st Gen. Any new styling or logic must not break execution in older browser versions.
+Please review these guidelines before submitting issue reports or opening Pull Requests.
 
 ---
 
-## 2. Reporting Issues & Requesting Features
+## 1. Core Principles & Architecture Rules
+
+1. **Strict Single-File Constraint**: LegacyChat is, and must remain, a single self-contained [`index.html`](file:///Volumes/1TB%20Graphics%20SSD/Sansan_DO_NOT_TOUCH/Projects/legacychat/index.html) file. Do not introduce package managers (npm dependencies), bundlers (Webpack, Vite), preprocessors (Sass, LESS), or transpilers (Babel).
+2. **Strict ES5 Compatibility**: Target environment is Safari 9.3.6 on iPad Mini 1st Gen. Do not use ES6+ features (`const`, `let`, `=>`, `async`/`await`, `fetch`).
+3. **Low CPU Overhead**: Optimizations must respect legacy dual-core hardware (Apple A5 processor). Always buffer streaming DOM updates (e.g. 60ms throttle timers).
+
+---
+
+## 2. Issue Reporting & Feature Requests
 
 ### Reporting Bugs
-If you find compatibility errors or runtime crashes:
-1. Search active and closed issues first to see if it has been discussed.
-2. If it is new, open a bug report issue.
-3. Be sure to specify:
-   - Target device and OS version (e.g., iPhone 5c on iOS 10.3.3, iPad 2 on iOS 9.3.5).
-   - Steps to reproduce the error.
-   - Any inspector logs or browser console output (if available via USB debugging).
+Before opening an issue:
+1. Search active and closed issues to avoid duplicate reports.
+2. If new, submit a detailed bug report specifying:
+   - Target device and OS version (e.g., iPad Mini 1st Gen on iOS 9.3.6, iPhone 5c on iOS 10.3.3).
+   - Exact steps to reproduce the failure.
+   - Remote Web Inspector console output or error tracebacks (if available via USB debugging).
 
-### Requesting Features
-If you want to suggest enhancements:
-1. Explain the value of the feature and how it can be adapted into the ES5 environment.
-2. Outline how it impacts the browser's storage and performance limits (such as `localStorage` 5MB quota).
-
----
-
-## 3. Local Development Guidelines
-
-- **Style Compliance**: Check your code structure. Avoid all ES6+ constructs. Double-check variable declarations (`var` only).
-- **CSS Formatting**: Match existing aesthetic conventions:
-  - Clean flexbox positioning.
-  - Proper vendor prefixes (`-webkit-`).
-  - Native iOS-like look and feel.
-- **Testing**:
-  - Load the modified `index.html` locally using a server.
-  - Verify that the layout remains responsive across desktop, iPad, and iPhone resolutions.
-  - Test transitions, inputs, custom markdown rendering, image compression canvas, and storage limits.
+### Suggesting Features
+When proposing new capabilities:
+1. Explain the practical value of the feature for legacy tablet users.
+2. Verify that the feature can be implemented using pure ES5 JavaScript and CSS flexbox.
+3. Assess the impact on browser `localStorage` bounds (5MB quota limit).
 
 ---
 
-## 4. Pull Request Requirements
+## 3. Code Style & Quality Standards
+
+- **Variable Declarations**: Always use `var`. Never use `let` or `const`.
+- **Function Syntax**: Declare standard functions (`function name() {}`). Do not use arrow functions.
+- **DOM Traversal**: Use safe element tree traversal functions like `findParentRow(element)` instead of hardcoded `parentNode` chains.
+- **Vendor Prefixes**: Include `-webkit-` prefixes for Flexbox and visual filters (`-webkit-backdrop-filter`).
+- **Sanitization**: Ensure all dynamic text content rendered into bubbles is processed via `escapeHTML()` and `sanitizeHTML()`.
+
+---
+
+## 4. Pull Request Checklist
 
 When submitting a Pull Request:
-1. Ensure your PR branch is updated against the `main` branch.
-2. Clearly describe what changes you've made and what issues they solve.
-3. If visual edits are made, update the matching media inside the `Screenshots/` folder and include preview links in your PR description.
-4. Keep commit messages concise and descriptive (e.g. `feat: implement dark mode adjustments` or `fix: resolve canvas upload sizing bug`).
+
+- [ ] PR targets the `main` branch.
+- [ ] Code is verified strictly inside `index.html`.
+- [ ] Confirmed zero ES6 keywords (`const`, `let`, `=>`, `async`, `await`, `fetch`) in `<script>`.
+- [ ] Verified visual layout responsiveness across Light and Dark themes.
+- [ ] Updated corresponding documentation in [`COMPONENTS.md`](file:///Volumes/1TB%20Graphics%20SSD/Sansan_DO_NOT_TOUCH/Projects/legacychat/COMPONENTS.md) and [`CHANGELOG.md`](file:///Volumes/1TB%20Graphics%20SSD/Sansan_DO_NOT_TOUCH/Projects/legacychat/CHANGELOG.md).
+- [ ] Included descriptive commit messages (e.g., `feat: add markdown strikethrough support` or `fix: resolve canvas upload ratio bug`).

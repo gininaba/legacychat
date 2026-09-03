@@ -184,8 +184,10 @@
 
     /* ─── NAVBAR ─── */
     .nav-bar {
-      background: rgba(249, 249, 249, 0.94);
-      border-bottom: 1px solid #c8c8cd;
+      background: rgba(249, 249, 249, 0.88);
+      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(200, 200, 205, 0.8);
       padding: 0 16px;
       height: 48px;
       display: -webkit-box;
@@ -270,8 +272,9 @@
     .empty-icon {
       width: 64px;
       height: 64px;
-      background: #007aff;
-      border-radius: 16px;
+      background: -webkit-linear-gradient(bottom left, #007aff, #34aadc);
+      background: linear-gradient(to top right, #007aff, #34aadc);
+      border-radius: 18px;
       display: -webkit-box;
       display: -webkit-flex;
       display: flex;
@@ -282,6 +285,8 @@
       -webkit-justify-content: center;
       justify-content: center;
       margin-bottom: 16px;
+      -webkit-box-shadow: 0 4px 14px rgba(0, 122, 255, 0.3);
+      box-shadow: 0 4px 14px rgba(0, 122, 255, 0.3);
     }
 
     .empty-icon svg {
@@ -304,7 +309,16 @@
       max-width: 280px;
     }
 
-    /* ─── BUBBLES ─── */
+    /* ─── BUBBLES & ANIMATIONS ─── */
+    @-webkit-keyframes slideInUp {
+      0% { opacity: 0; -webkit-transform: translateY(8px); }
+      100% { opacity: 1; -webkit-transform: translateY(0); }
+    }
+    @keyframes slideInUp {
+      0% { opacity: 0; transform: translateY(8px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
     .msg-row {
       display: -webkit-box;
       display: -webkit-flex;
@@ -313,6 +327,8 @@
       -webkit-box-align: end;
       -webkit-align-items: flex-end;
       align-items: flex-end;
+      -webkit-animation: slideInUp 0.2s ease-out;
+      animation: slideInUp 0.2s ease-out;
     }
 
     .msg-row.user {
@@ -428,8 +444,10 @@
 
     /* ─── INPUT BAR ─── */
     .input-bar {
-      background: rgba(249, 249, 249, 0.94);
-      border-top: 1px solid #c8c8cd;
+      background: rgba(249, 249, 249, 0.88);
+      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(200, 200, 205, 0.8);
       padding: 8px 12px;
       display: -webkit-box;
       display: -webkit-flex;
@@ -791,8 +809,58 @@
       padding: 4px 12px;
       letter-spacing: 0.05em;
       text-transform: uppercase;
+      display: -webkit-box;
+      display: -webkit-flex;
+      display: flex;
+      -webkit-box-pack: justify;
+      -webkit-justify-content: space-between;
+      justify-content: space-between;
+      -webkit-box-align: center;
+      -webkit-align-items: center;
+      align-items: center;
       -webkit-transition: background 0.3s, color 0.3s;
       transition: background 0.3s, color 0.3s;
+    }
+
+    .code-copy-btn {
+      background: none;
+      border: none;
+      color: #007aff;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      -webkit-appearance: none;
+      padding: 2px 4px;
+    }
+
+    .code-copy-btn:active {
+      color: #0051a8;
+    }
+
+    .char-counter {
+      font-size: 11px;
+      color: #8e8e93;
+      text-align: right;
+      padding: 2px 14px 4px;
+      display: none;
+    }
+
+    .chat-item-badge {
+      font-size: 11px;
+      color: #8e8e93;
+      background: #e5e5ea;
+      padding: 2px 6px;
+      border-radius: 8px;
+      margin-left: 6px;
+      display: inline-block;
+    }
+
+    .drawer-action-btn.danger {
+      color: #ff3b30;
+    }
+
+    .drawer-action-btn.danger:active {
+      background: #ffd6d6;
     }
 
     .bubble pre.code-block {
@@ -1098,10 +1166,15 @@
     /* Dark Mode overwrites for new CSS */
     body.dark-mode .drawer-action-btn { background: #2c2c2e; color: #fff; }
     body.dark-mode .drawer-action-btn:active { background: #3a3a3c; }
-    body.dark-mode #scroll-bottom-btn { background: rgba(28, 28, 30, 0.9); border-color: #3a3a3c; }
+    body.dark-mode .drawer-action-btn.danger { color: #ff453a; }
+    body.dark-mode .drawer-action-btn.danger:active { background: #4a1c1c; }
+    body.dark-mode #scroll-bottom-btn { background: rgba(28, 28, 30, 0.9); border-color: #3a3a3c; color: #0a84ff; }
     body.dark-mode .image-preview-wrap { border-color: #3a3a3c; }
     body.dark-mode #history-search { background: #2c2c2e; color: #fff; border-color: #3a3a3c; }
     body.dark-mode #history-search::-webkit-input-placeholder { color: #8e8e93; }
+    body.dark-mode .code-copy-btn { color: #0a84ff; }
+    body.dark-mode .code-copy-btn:active { color: #409cff; }
+    body.dark-mode .chat-item-badge { background: #3a3a3c; color: #aeaeae; }
 
     body.dark-mode #group-temp label,
     body.dark-mode #group-tokens label { color: #fff !important; }
@@ -1202,7 +1275,11 @@
       <button class="nav-btn" onclick="startNewChat()">New</button>
     </div>
 
-    <button id="scroll-bottom-btn" onclick="scrollToBottom(true)">⬇</button>
+    <button id="scroll-bottom-btn" onclick="scrollToBottom(true)" aria-label="Scroll to bottom">
+      <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+        <path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+      </svg>
+    </button>
     <div class="messages-wrap" id="messages" onscroll="handleScroll()">
       <div class="empty-state" id="empty-state">
         <div class="empty-icon">
@@ -1227,6 +1304,7 @@
             <button class="remove-image-btn" onclick="removeImage()">✕</button>
           </div>
           <textarea id="user-input" rows="1" placeholder="Message"></textarea>
+          <div id="char-counter" class="char-counter">0 chars</div>
         </div>
       </div>
       <button id="stop-btn" onclick="stopGeneration()" aria-label="Stop" style="display:none;">
@@ -1255,6 +1333,18 @@
     </div>
   </div>
 
+  <!-- ════════════════════════════════ CLEAR ALL CONFIRM ════════════════════════════════ -->
+  <div class="confirm-overlay" id="confirm-all-overlay">
+    <div class="confirm-box">
+      <h3>Clear All History</h3>
+      <p>This will permanently delete all chat history. This action cannot be undone.</p>
+      <div class="confirm-actions">
+        <button onclick="hideClearAllConfirm()">Cancel</button>
+        <button onclick="clearAllChats()">Clear All</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ════════════════════════════════ HISTORY DRAWER ════════════════════════════════ -->
   <div class="drawer-overlay" id="history-overlay" onclick="closeHistoryDrawer()"></div>
   <div class="history-drawer" id="history-drawer">
@@ -1272,6 +1362,7 @@
       <div class="drawer-footer-actions">
         <button class="drawer-action-btn" onclick="exportHistory()">Export</button>
         <button class="drawer-action-btn" onclick="document.getElementById('import-upload').click()">Import</button>
+        <button class="drawer-action-btn danger" onclick="showClearAllConfirm()">Clear All</button>
         <input type="file" id="import-upload" accept=".json" style="display:none" onchange="importHistory(event)">
       </div>
       <button class="drawer-settings-btn" onclick="showSettings()">
@@ -1355,6 +1446,7 @@
         }
         renderCustomPersonas();
         loadChatsFromStorage();
+        pruneStaleDrafts();
       } catch (e) {
         console.log('localStorage is disabled or inaccessible.');
       }
@@ -1372,6 +1464,28 @@
       }
     }
 
+    function pruneStaleDrafts() {
+      try {
+        var activeIds = {};
+        for (var i = 0; i < chats.length; i++) {
+          activeIds[chats[i].id] = true;
+        }
+        var keysToRemove = [];
+        for (var k = 0; k < localStorage.length; k++) {
+          var key = localStorage.key(k);
+          if (key && key.indexOf('draft_') === 0) {
+            var chatId = key.substring(6);
+            if (!activeIds[chatId] && chatId !== currentChatId) {
+              keysToRemove.push(key);
+            }
+          }
+        }
+        for (var r = 0; r < keysToRemove.length; r++) {
+          localStorage.removeItem(keysToRemove[r]);
+        }
+      } catch(e) {}
+    }
+
     function safeLocalStorageSetItem(key, value) {
       try {
         localStorage.setItem(key, value);
@@ -1379,11 +1493,17 @@
       } catch (e) {
         if (e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || e.code === 22 || e.number === 0x80530014)) {
           alert("Storage Limit Exceeded: LegacyChat cannot save history or settings because the browser's storage is full.\n\nPlease export your history, clear old conversations, or delete large images/chats to free up space.");
-        } else {
-          console.log("localStorage error:", e);
         }
         return false;
       }
+    }
+
+    var saveChatsDebounceTimer = null;
+    function debouncedSaveChatsToStorage() {
+      if (saveChatsDebounceTimer) clearTimeout(saveChatsDebounceTimer);
+      saveChatsDebounceTimer = setTimeout(function() {
+        saveChatsToStorage();
+      }, 500);
     }
 
     function saveChatsToStorage() {
@@ -1443,7 +1563,7 @@
         return b.updatedAt - a.updatedAt;
       });
 
-      saveChatsToStorage();
+      debouncedSaveChatsToStorage();
     }
 
     function renderHistoryList() {
@@ -1466,7 +1586,13 @@
 
           var title = document.createElement('div');
           title.className = 'chat-item-title';
-          title.textContent = chat.title;
+          title.textContent = chat.title + ' ';
+
+          var badge = document.createElement('span');
+          badge.className = 'chat-item-badge';
+          var msgCount = chat.messages ? chat.messages.length : 0;
+          badge.textContent = msgCount + ' msgs';
+          title.appendChild(badge);
 
           var date = document.createElement('div');
           date.className = 'chat-item-date';
@@ -1607,20 +1733,49 @@
       safeLocalStorageSetItem('theme', theme);
     }
 
-    function filterHistory() {
-      var q = document.getElementById('history-search').value.toLowerCase();
-      var listEl = document.getElementById('history-list');
-      var items = listEl.getElementsByClassName('chat-item');
-      for (var i = 0; i < items.length; i++) {
-        var title = items[i].querySelector('.chat-item-title').textContent.toLowerCase();
-        if (title.indexOf(q) > -1) {
-          items[i].style.display = '-webkit-box';
-          items[i].style.display = '-webkit-flex';
-          items[i].style.display = 'flex';
-        } else {
-          items[i].style.display = 'none';
-        }
+    function showClearAllConfirm() {
+      document.getElementById('confirm-all-overlay').className = 'confirm-overlay show';
+    }
+
+    function hideClearAllConfirm() {
+      document.getElementById('confirm-all-overlay').className = 'confirm-overlay';
+    }
+
+    function clearAllChats() {
+      chats = [];
+      saveChatsToStorage();
+      renderHistoryList();
+      hideClearAllConfirm();
+      startNewChat();
+    }
+
+    function toggleTheme(theme) {
+      if (theme === 'dark') {
+        document.body.className = 'dark-mode';
+      } else {
+        document.body.className = '';
       }
+      safeLocalStorageSetItem('theme', theme);
+    }
+
+    var filterHistoryDebounceTimer = null;
+    function filterHistory() {
+      if (filterHistoryDebounceTimer) clearTimeout(filterHistoryDebounceTimer);
+      filterHistoryDebounceTimer = setTimeout(function() {
+        var q = document.getElementById('history-search').value.toLowerCase();
+        var listEl = document.getElementById('history-list');
+        var items = listEl.getElementsByClassName('chat-item');
+        for (var i = 0; i < items.length; i++) {
+          var title = items[i].querySelector('.chat-item-title').textContent.toLowerCase();
+          if (title.indexOf(q) > -1) {
+            items[i].style.display = '-webkit-box';
+            items[i].style.display = '-webkit-flex';
+            items[i].style.display = 'flex';
+          } else {
+            items[i].style.display = 'none';
+          }
+        }
+      }, 150);
     }
 
     function renderCustomPersonas() {
@@ -1657,7 +1812,7 @@
       var tc = document.getElementById('nav-token-counter');
       if (tc && sessionTokens > 0) {
         tc.style.display = 'inline-block';
-        tc.textContent = sessionTokens + ' tkns';
+        tc.textContent = sessionTokens + ' tokens';
       }
     }
 
@@ -1724,6 +1879,18 @@
       var maxH = 120;
       var newH = Math.min(this.scrollHeight, maxH);
       this.style.height = newH + 'px';
+
+      var charCounter = document.getElementById('char-counter');
+      if (charCounter) {
+        var len = this.value.length;
+        if (len > 500) {
+          charCounter.style.display = 'block';
+          charCounter.textContent = len + ' chars';
+        } else {
+          charCounter.style.display = 'none';
+        }
+      }
+
       if (currentChatId) {
         safeLocalStorageSetItem('draft_' + currentChatId, this.value);
       }
@@ -1865,6 +2032,18 @@
       updateSendButtonState();
     }
 
+    // ─── DOM HELPERS ───
+    function findParentRow(element) {
+      var cur = element;
+      while (cur && cur !== document.body) {
+        if (cur.className && cur.className.indexOf('msg-row') > -1) {
+          return cur;
+        }
+        cur = cur.parentNode;
+      }
+      return null;
+    }
+
     function stopGeneration() {
       if (currentXHR && isLoading) {
         currentXHR.abort();
@@ -1910,6 +2089,74 @@
       titleXHR.send(JSON.stringify({ model: MODEL, messages: msgs, max_tokens: 10 }));
     }
 
+    // ─── GENERATION PIPELINE ───
+    function runGeneration(onComplete) {
+      isLoading = true;
+      updateSendButtonState();
+      document.getElementById('send-btn').style.display = 'none';
+      document.getElementById('stop-btn').style.display = '-webkit-box';
+      document.getElementById('stop-btn').style.display = 'flex';
+
+      var typingRow = showTyping();
+      var currentStreamBubble = null;
+      var currentStreamText = "";
+      var renderTimer = null;
+
+      function renderStream() {
+        if (currentStreamBubble) {
+          currentStreamBubble.innerHTML = sanitizeHTML(formatMarkdown(currentStreamText));
+          scrollToBottom();
+        }
+      }
+
+      callAPI(function (reply, error) {
+        if (renderTimer) { clearInterval(renderTimer); renderTimer = null; }
+        renderStream();
+
+        if (typingRow) { removeTyping(typingRow); typingRow = null; }
+        isLoading = false;
+        updateSendButtonState();
+        document.getElementById('stop-btn').style.display = 'none';
+        document.getElementById('send-btn').style.display = '-webkit-box';
+        document.getElementById('send-btn').style.display = 'flex';
+
+        if (error) {
+          if (error !== 'abort') appendBubble('ai', error, true);
+          else if (currentStreamBubble) {
+             var row = findParentRow(currentStreamBubble);
+             if (row && row.parentNode) row.parentNode.removeChild(row);
+             var cleanedReply = cleanAIResponse(currentStreamText);
+             appendBubble('ai', cleanedReply, false, false, false, cleanedReply);
+             conversationHistory.push({ role: 'assistant', content: cleanedReply });
+             saveCurrentChat();
+             generateTitleIfNeeded();
+          }
+        } else {
+          if (currentStreamBubble) {
+             var row = findParentRow(currentStreamBubble);
+             if (row && row.parentNode) row.parentNode.removeChild(row);
+          }
+          var cleanedReply = cleanAIResponse(currentStreamText);
+          appendBubble('ai', cleanedReply, false, false, false, cleanedReply);
+          conversationHistory.push({ role: 'assistant', content: cleanedReply });
+          saveCurrentChat();
+          generateTitleIfNeeded();
+        }
+
+        if (onComplete) onComplete();
+      }, function(chunk) {
+         if (typingRow) { removeTyping(typingRow); typingRow = null; }
+         if (!currentStreamBubble) {
+             currentStreamBubble = appendBubble('ai', '', false, true, true, undefined);
+             currentStreamText = "";
+             renderTimer = setInterval(function() {
+               renderStream();
+             }, 60);
+         }
+         currentStreamText += chunk;
+      });
+    }
+
     // ─── SEND ───
     function sendMessage() {
       if (isLoading) return;
@@ -1918,13 +2165,11 @@
 
       hideEmptyState();
 
-      // UI append
       var escapedText = escapeHTML(text).replace(/\n/g, '<br>');
       var uiContent = escapedText;
       if (currentImageBase64) uiContent = '<img src="' + currentImageBase64 + '" class="img-bubble"><br>' + escapedText;
       appendBubble('user', uiContent, false, false, true, text);
 
-      // History append
       if (currentImageBase64) {
          var contentArr = [];
          if (text) contentArr.push({ type: "text", text: text });
@@ -1939,58 +2184,12 @@
 
       textarea.value = '';
       textarea.style.height = 'auto';
+      var charCounter = document.getElementById('char-counter');
+      if (charCounter) charCounter.style.display = 'none';
+
       if (currentChatId) localStorage.removeItem('draft_' + currentChatId);
 
-      isLoading = true;
-      updateSendButtonState();
-      document.getElementById('send-btn').style.display = 'none';
-      document.getElementById('stop-btn').style.display = '-webkit-box';
-      document.getElementById('stop-btn').style.display = 'flex';
-
-      var typingRow = showTyping();
-      var currentStreamBubble = null;
-      var currentStreamText = "";
-
-      callAPI(function (reply, error) {
-        if (typingRow) { removeTyping(typingRow); typingRow = null; }
-        isLoading = false;
-        updateSendButtonState();
-        document.getElementById('stop-btn').style.display = 'none';
-        document.getElementById('send-btn').style.display = '-webkit-box';
-        document.getElementById('send-btn').style.display = 'flex';
-
-        if (error) {
-          if (error !== 'abort') appendBubble('ai', error, true);
-          else if (currentStreamBubble) {
-             var row = currentStreamBubble.parentNode;
-             row.parentNode.removeChild(row);
-             var cleanedReply = cleanAIResponse(currentStreamText);
-             appendBubble('ai', cleanedReply, false, false, false, cleanedReply);
-             conversationHistory.push({ role: 'assistant', content: cleanedReply });
-             saveCurrentChat();
-             generateTitleIfNeeded();
-          }
-        } else {
-          if (currentStreamBubble) {
-             var row = currentStreamBubble.parentNode;
-             row.parentNode.removeChild(row);
-          }
-          var cleanedReply = cleanAIResponse(currentStreamText);
-          appendBubble('ai', cleanedReply, false, false, false, cleanedReply);
-          conversationHistory.push({ role: 'assistant', content: cleanedReply });
-          saveCurrentChat();
-          generateTitleIfNeeded();
-        }
-      }, function(chunk) {
-         if (typingRow) { removeTyping(typingRow); typingRow = null; }
-         if (!currentStreamBubble) {
-             currentStreamBubble = appendBubble('ai', '', false, true, true, undefined);
-             currentStreamText = "";
-         }
-         currentStreamText += chunk;
-         currentStreamBubble.innerHTML = formatMarkdown(currentStreamText);
-         scrollToBottom();
-      });
+      runGeneration();
     }
 
     // ─── API CALL (XHR — ES5, iOS 9 compatible) ───
@@ -2002,7 +2201,6 @@
       xhr.setRequestHeader('HTTP-Referer', window.location.href);
       xhr.setRequestHeader('X-Title', 'LegacyChat iPad');
 
-      // 60 seconds timeout (better for slower AI models)
       xhr.timeout = 60000;
       xhr.ontimeout = function () {
         callback(null, 'Request timed out. Please check your connection and try again.');
@@ -2026,9 +2224,6 @@
 
       xhr.onreadystatechange = function () {
         if (xhr.readyState === 3 || xhr.readyState === 4) {
-          if (xhr.status !== 200 && xhr.status !== 0 && xhr.readyState === 4) {
-            return;
-          }
           if (xhr.status === 200) {
             var newData = xhr.responseText.substring(seenLength);
             seenLength = xhr.responseText.length;
@@ -2051,8 +2246,7 @@
                       updateTokenDisplay();
                     }
                     if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
-                      var chunk = data.choices[0].delta.content;
-                      if (onChunk) onChunk(chunk);
+                      if (onChunk) onChunk(data.choices[0].delta.content);
                     }
                   } catch (e) { }
                 }
@@ -2063,28 +2257,10 @@
         
         if (xhr.readyState === 4) {
           if (xhr.status === 200) {
-            if (buffer.trim()) {
-               var remainingLines = buffer.split('\n');
-               for(var b = 0; b < remainingLines.length; b++) {
-                 var rLine = remainingLines[b].trim();
-                 if (rLine.indexOf('data: ') === 0) {
-                   var rJsonStr = rLine.substring(6);
-                   if (rJsonStr !== '[DONE]') {
-                     try {
-                       var rData = JSON.parse(rJsonStr);
-                       if (rData.choices && rData.choices[0] && rData.choices[0].delta && rData.choices[0].delta.content) {
-                         if (onChunk) onChunk(rData.choices[0].delta.content);
-                       }
-                     } catch(e) {}
-                   }
-                 }
-               }
-            }
             callback(null, null);
           } else if (xhr.status === 0) {
             callback(null, 'abort');
           } else {
-            console.log('HTTP Error Status:', xhr.status);
             var errMsg = 'Error ' + xhr.status;
             if (xhr.status === 429) {
               errMsg = 'Rate limit exceeded. Please wait a moment and try again.';
@@ -2104,16 +2280,13 @@
       };
 
       xhr.onerror = function () {
-        console.log('Network error triggered.');
         callback(null, 'Network error. Check your connection.');
       };
 
-      console.log('Sending body:', body);
       currentXHR = xhr;
       xhr.send(body);
     }
 
-    // ─── DOM HELPERS ───
     function hideEmptyState() {
       var el = document.getElementById('empty-state');
       if (el) { el.style.display = 'none'; }
@@ -2122,50 +2295,23 @@
     function cleanAIResponse(text) {
       if (!text) return text;
       var trimmed = text.trim();
-
-      // Check if it looks like a JSON array or object
       if ((trimmed.indexOf('[') === 0 && trimmed.lastIndexOf(']') >= 0) ||
         (trimmed.indexOf('{') === 0 && trimmed.lastIndexOf('}') >= 0)) {
         try {
-          var parsed = null;
-          try {
-            parsed = JSON.parse(trimmed);
-          } catch (e) {
-            // Normalize single quotes to double quotes, fix trailing brackets/curly-braces
-            var normalized = trimmed
-              .replace(/'/g, '"')
-              .replace(/}\s*]$/, '}]')
-              .replace(/]\s*}$/, ']');
-            parsed = JSON.parse(normalized);
-          }
-
-          if (parsed) {
-            if (Array.isArray(parsed)) {
-              var extractedText = '';
-              for (var i = 0; i < parsed.length; i++) {
-                if (parsed[i]) {
-                  if (parsed[i].text) {
-                    extractedText += (extractedText ? '\n' : '') + parsed[i].text;
-                  } else if (parsed[i].content) {
-                    extractedText += (extractedText ? '\n' : '') + parsed[i].content;
-                  }
-                }
-              }
-              if (extractedText) return extractedText;
-            } else if (typeof parsed === 'object') {
-              if (parsed.text) {
-                return parsed.text;
-              } else if (parsed.content) {
-                return parsed.content;
-              }
+          var parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) {
+            var extractedText = '';
+            for (var i = 0; i < parsed.length; i++) {
+              if (parsed[i].text) extractedText += (extractedText ? '\n' : '') + parsed[i].text;
+              else if (parsed[i].content) extractedText += (extractedText ? '\n' : '') + parsed[i].content;
             }
+            return extractedText || text;
+          } else if (typeof parsed === 'object') {
+            return parsed.text || parsed.content || text;
           }
         } catch (err) {
-          // Fallback regex match if JSON parsing fails
-          var textMatch = trimmed.match(/"text"\s*:\s*"([^"]+)"/) || trimmed.match(/'text'\s*:\s*'([^']+)'/);
-          if (textMatch && textMatch[1]) {
-            return textMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
-          }
+          var textMatch = trimmed.match(/"text"\s*:\s*"([^"]+)"/);
+          if (textMatch && textMatch[1]) return textMatch[1].replace(/\\n/g, '\n');
         }
       }
       return text;
@@ -2173,15 +2319,10 @@
 
     function sanitizeHTML(htmlString) {
       if (!htmlString) return htmlString;
-      // 1. Remove script tags and their contents
-      var clean = htmlString.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
-      // 2. Remove other dangerous tags
-      clean = clean.replace(/<(iframe|object|embed|form|meta|link|style)[^>]*>/gi, '');
-      // 3. Remove event handlers like onload, onerror, onclick, etc.
-      clean = clean.replace(/\b(on[a-z]+)\s*=\s*(['"][^'"]*['"]|[^\s>]+)/gi, '');
-      // 4. Remove javascript: pseudos in href/src
-      clean = clean.replace(/\b(href|src)\s*=\s*['"]\s*javascript:[^'"]*['"]/gi, '');
-      return clean;
+      return htmlString.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+                       .replace(/<(iframe|object|embed|form|meta|link|style)[^>]*>/gi, '')
+                       .replace(/\b(on[a-z]+)\s*=\s*(['"][^'"]*['"]|[^\s>]+)/gi, '')
+                       .replace(/\b(href|src)\s*=\s*['"]\s*javascript:[^'"]*['"]/gi, '');
     }
 
     function escapeHTML(str) {
@@ -2192,30 +2333,48 @@
         .replace(/'/g, '&#039;');
     }
 
+    function copyCodeBlock(btn) {
+      var container = findParentRow(btn) || btn.parentNode.parentNode.parentNode;
+      var codeEl = container ? container.querySelector('code') : null;
+      if (!codeEl) return;
+      var text = codeEl.innerText || codeEl.textContent;
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        var oldText = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(function() { btn.textContent = oldText; }, 2000);
+      } catch(e) {}
+      document.body.removeChild(ta);
+    }
+
     function formatMarkdown(text) {
       var escaped = escapeHTML(text);
       var codeBlocks = [];
       var token = '___AICHAT_CODE_' + new Date().getTime() + '_';
 
-      // 1. Extract code blocks and replace with placeholders
       escaped = escaped.replace(/```([\s\S]*?)```/g, function (match, inner) {
         var lines = inner.split('\n');
         var firstLine = lines[0].trim();
-        var langList = ['javascript', 'js', 'html', 'css', 'python', 'py', 'json', 'bash', 'sh', 'swift', 'objectivec', 'cpp', 'c', 'java', 'typescript', 'ts', 'markdown', 'md'];
+        var langList = ['javascript', 'js', 'html', 'css', 'python', 'py', 'json', 'bash', 'sh', 'swift', 'cpp', 'c', 'java', 'typescript', 'ts', 'markdown', 'md'];
         var displayLang = 'CODE';
         if (lines.length > 1 && langList.indexOf(firstLine.toLowerCase()) !== -1) {
           displayLang = firstLine.toUpperCase();
           lines.shift();
         }
         var codeStr = lines.join('\n').trim();
-        // Simple ES5 syntax highlight
         codeStr = codeStr.replace(/\b(var|function|return|if|else|for|while|new|this|class|import|export|const|let)\b/g, '<span style="color:#007aff">$1</span>');
         codeStr = codeStr.replace(/\b(true|false|null|undefined)\b/g, '<span style="color:#ff3b30">$1</span>');
         codeStr = codeStr.replace(/('[^']*')/g, '<span style="color:#34c759">$1</span>');
         codeStr = codeStr.replace(/("[^"]*")/g, '<span style="color:#34c759">$1</span>');
         codeStr = codeStr.replace(/\b(\d+)\b/g, '<span style="color:#ff9500">$1</span>');
         codeStr = codeStr.replace(/(\/\/.*)/g, '<span style="color:#8e8e93">$1</span>');
-        codeBlocks.push('<div class="code-block-container"><div class="code-header">' + displayLang + '</div><pre class="code-block"><code>' + codeStr + '</code></pre></div>');
+        codeBlocks.push('<div class="code-block-container"><div class="code-header"><span>' + displayLang + '</span><button class="code-copy-btn" onclick="copyCodeBlock(this)">Copy</button></div><pre class="code-block"><code>' + codeStr + '</code></pre></div>');
         return '\n\n' + token + (codeBlocks.length - 1) + '___\n\n';
       });
 
@@ -2226,8 +2385,6 @@
       for (var p = 0; p < paragraphs.length; p++) {
         var block = paragraphs[p].trim();
         if (!block) continue;
-
-        // Check if it's a code block placeholder
         var tokenMatch = block.match(tokenRegex);
         if (tokenMatch) {
           var idx = parseInt(tokenMatch[1], 10);
@@ -2236,121 +2393,23 @@
             continue;
           }
         }
-
-        // Inline code
         block = block.replace(/`([^`]+)`/g, '<code>$1</code>');
-        // Bold
+        block = block.replace(/~~([^~]+)~~/g, '<del>$1</del>');
         block = block.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
         block = block.replace(/__([^_]+)__/g, '<strong>$1</strong>');
-        // Italic
         block = block.replace(/\*([^*]+)\*/g, '<em>$1</em>');
         block = block.replace(/_([^_]+)_/g, '<em>$1</em>');
-
-        // Headers
-        if (block.indexOf('# ') === 0) {
-          htmlBlocks.push('<h1>' + block.substring(2) + '</h1>');
-        } else if (block.indexOf('## ') === 0) {
-          htmlBlocks.push('<h2>' + block.substring(3) + '</h2>');
-        } else if (block.indexOf('### ') === 0) {
-          htmlBlocks.push('<h3>' + block.substring(4) + '</h3>');
-        } else {
-          // Process list, tables and paragraph line-by-line
-          var lines = block.split('\n');
-          var isList = false;
-          var isTable = false;
-          var listType = '';
-          var resultHTML = '';
-          var currentPara = '';
-          var tableRowIndex = -1;
-
-          // Check if there is a valid delimiter row anywhere in this block
-          var hasDelimiterRow = false;
-          for (var idx = 0; idx < lines.length; idx++) {
-            if (lines[idx].trim().match(/^\|[-:| ]+\|$/)) {
-              hasDelimiterRow = true;
-              break;
-            }
-          }
-
-          for (var l = 0; l < lines.length; l++) {
-            var line = lines[l].trim();
-            if (!line) continue;
-
-            var isBullet = (line.indexOf('* ') === 0 || line.indexOf('- ') === 0 || line.indexOf('+ ') === 0);
-            var numMatch = line.match(/^(\d+)\.\s+(.*)/);
-            var isTableRow = (line.indexOf('|') === 0 && line.lastIndexOf('|') === line.length - 1);
-
-            if (isTableRow) {
-              if (currentPara) { resultHTML += '<p>' + currentPara + '</p>'; currentPara = ''; }
-              if (isList) { resultHTML += '</' + listType + '>'; isList = false; }
-              
-              if (!isTable) {
-                isTable = true;
-                tableRowIndex = 0;
-                resultHTML += '<table><tbody>';
-              } else {
-                tableRowIndex++;
-              }
-              // Skip the separator row like |---|---|
-              if (line.match(/^\|[-:| ]+\|$/)) {
-                tableRowIndex--;
-                continue;
-              }
-              
-              var cells = line.substring(1, line.length - 1).split('|');
-              resultHTML += '<tr>';
-              for(var c=0; c<cells.length; c++) {
-                var isHeader = hasDelimiterRow && (tableRowIndex === 0);
-                var cellType = isHeader ? 'th' : 'td';
-                resultHTML += '<' + cellType + '>' + cells[c].trim() + '</' + cellType + '>';
-              }
-              resultHTML += '</tr>';
-            } else if (isBullet || numMatch) {
-              if (currentPara) {
-                resultHTML += '<p>' + currentPara + '</p>';
-                currentPara = '';
-              }
-              if (isTable) { resultHTML += '</tbody></table>'; isTable = false; tableRowIndex = -1; }
-              if (!isList) {
-                isList = true;
-                listType = isBullet ? 'ul' : 'ol';
-                resultHTML += '<' + listType + '>';
-              } else if (isBullet && listType !== 'ul') {
-                resultHTML += '</ol><ul>';
-                listType = 'ul';
-              } else if (numMatch && listType !== 'ol') {
-                resultHTML += '</ul><ol>';
-                listType = 'ol';
-              }
-              resultHTML += '<li>' + (isBullet ? line.substring(2) : numMatch[2]) + '</li>';
-            } else {
-              if (isList) {
-                resultHTML += '</' + listType + '>';
-                isList = false;
-              }
-              if (isTable) { resultHTML += '</tbody></table>'; isTable = false; }
-              currentPara += (currentPara ? '<br>' : '') + line;
-            }
-          }
-          if (isList) {
-            resultHTML += '</' + listType + '>';
-          }
-          if (isTable) {
-            resultHTML += '</tbody></table>';
-          }
-          if (currentPara) {
-            resultHTML += '<p>' + currentPara + '</p>';
-          }
-
-          htmlBlocks.push(resultHTML);
-        }
+        if (block.indexOf('# ') === 0) htmlBlocks.push('<h1>' + block.substring(2) + '</h1>');
+        else if (block.indexOf('## ') === 0) htmlBlocks.push('<h2>' + block.substring(3) + '</h2>');
+        else if (block.indexOf('### ') === 0) htmlBlocks.push('<h3>' + block.substring(4) + '</h3>');
+        else htmlBlocks.push('<p>' + block.replace(/\n/g, '<br>') + '</p>');
       }
-
       return htmlBlocks.join('');
     }
 
     function editMessage(btn) {
-      var row = btn.parentNode.parentNode.parentNode;
+      var row = findParentRow(btn);
+      if (!row) return;
       var wrap = document.getElementById('messages');
       var nodes = wrap.querySelectorAll('.msg-row');
       var idx = -1;
@@ -2358,17 +2417,11 @@
         if (nodes[i] === row) { idx = i; break; }
       }
       if (idx === -1) return;
-      
       var msg = conversationHistory[idx];
-      var text = '';
-      if (typeof msg.content === 'string') text = msg.content;
-      else if (Array.isArray(msg.content)) {
-        for(var k=0; k<msg.content.length; k++) if(msg.content[k].type === 'text') text += msg.content[k].text;
-      }
+      var text = (typeof msg.content === 'string') ? msg.content : msg.content[0].text;
       var ta = document.getElementById('user-input');
       ta.value = text;
       ta.dispatchEvent(new Event('input'));
-      
       conversationHistory = conversationHistory.slice(0, idx);
       while(wrap.lastChild && wrap.lastChild !== row.previousSibling) {
         wrap.removeChild(wrap.lastChild);
@@ -2378,7 +2431,8 @@
     
     function regenerateMessage(btn) {
       if (isLoading) return;
-      var row = btn.parentNode.parentNode.parentNode;
+      var row = findParentRow(btn);
+      if (!row) return;
       var wrap = document.getElementById('messages');
       var nodes = wrap.querySelectorAll('.msg-row');
       var idx = -1;
@@ -2386,61 +2440,12 @@
         if (nodes[i] === row) { idx = i; break; }
       }
       if (idx === -1) return;
-      
       conversationHistory = conversationHistory.slice(0, idx);
       while(wrap.lastChild && wrap.lastChild !== row.previousSibling) {
         wrap.removeChild(wrap.lastChild);
       }
       saveCurrentChat();
-      
-      isLoading = true;
-      updateSendButtonState();
-      document.getElementById('send-btn').style.display = 'none';
-      document.getElementById('stop-btn').style.display = '-webkit-box';
-      document.getElementById('stop-btn').style.display = 'flex';
-      
-      var typingRow = showTyping();
-      var currentStreamBubble = null;
-      var currentStreamText = "";
-
-      callAPI(function (reply, error) {
-        if (typingRow) { removeTyping(typingRow); typingRow = null; }
-        isLoading = false;
-        updateSendButtonState();
-        document.getElementById('stop-btn').style.display = 'none';
-        document.getElementById('send-btn').style.display = '-webkit-box';
-        document.getElementById('send-btn').style.display = 'flex';
-        
-        if (error) {
-          if (error !== 'abort') appendBubble('ai', error, true);
-          else if (currentStreamBubble) {
-             var row = currentStreamBubble.parentNode;
-             row.parentNode.removeChild(row);
-             var cleanedReply = cleanAIResponse(currentStreamText);
-             appendBubble('ai', cleanedReply, false, false, false, cleanedReply);
-             conversationHistory.push({ role: 'assistant', content: cleanedReply });
-             saveCurrentChat();
-          }
-        } else {
-          if (currentStreamBubble) {
-             var row = currentStreamBubble.parentNode;
-             row.parentNode.removeChild(row);
-          }
-          var cleanedReply = cleanAIResponse(currentStreamText);
-          appendBubble('ai', cleanedReply, false, false, false, cleanedReply);
-          conversationHistory.push({ role: 'assistant', content: cleanedReply });
-          saveCurrentChat();
-        }
-      }, function(chunk) {
-         if (typingRow) { removeTyping(typingRow); typingRow = null; }
-         if (!currentStreamBubble) {
-             currentStreamBubble = appendBubble('ai', '', false, true, true, undefined);
-             currentStreamText = "";
-         }
-         currentStreamText += chunk;
-         currentStreamBubble.innerHTML = sanitizeHTML(formatMarkdown(currentStreamText));
-         scrollToBottom();
-      });
+      runGeneration();
     }
 
     function copyMessage(btn) {
@@ -2455,7 +2460,7 @@
       try { 
         document.execCommand('copy'); 
         var oldHtml = btn.innerHTML;
-        btn.innerHTML = 'Copied!'; 
+        btn.textContent = 'Copied!';
         setTimeout(function(){ btn.innerHTML = oldHtml; }, 2000); 
       } catch(e){}
       document.body.removeChild(ta);
@@ -2465,23 +2470,11 @@
       var messagesEl = document.getElementById('messages');
       var row = document.createElement('div');
       row.className = 'msg-row ' + role;
-
       var bubble = document.createElement('div');
       bubble.className = 'bubble' + (isError ? ' error' : '');
-
-      if (role === 'ai' && !isError) {
-        bubble.innerHTML = sanitizeHTML(formatMarkdown(text));
-      } else if (isRawHtml) {
-        bubble.innerHTML = sanitizeHTML(text);
-      } else {
-        // simple newline → <br>
-        var parts = text.split('\n');
-        for (var i = 0; i < parts.length; i++) {
-          if (i > 0) bubble.appendChild(document.createElement('br'));
-          bubble.appendChild(document.createTextNode(parts[i]));
-        }
-      }
-
+      if (role === 'ai' && !isError) bubble.innerHTML = sanitizeHTML(formatMarkdown(text));
+      else if (isRawHtml) bubble.innerHTML = sanitizeHTML(text);
+      else bubble.textContent = text;
       if (!isError && rawTextContent !== undefined) {
         var actions = document.createElement('div');
         actions.className = 'bubble-actions';
@@ -2489,32 +2482,28 @@
           var copyBtn = document.createElement('button');
           copyBtn.className = 'msg-action-btn';
           copyBtn.setAttribute('data-raw', rawTextContent);
-          copyBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> Copy';
+          copyBtn.innerHTML = 'Copy';
           copyBtn.onclick = function() { copyMessage(this); };
           actions.appendChild(copyBtn);
-          
           var regenBtn = document.createElement('button');
           regenBtn.className = 'msg-action-btn';
-          regenBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg> Regenerate';
+          regenBtn.innerHTML = 'Regenerate';
           regenBtn.onclick = function() { regenerateMessage(this); };
           actions.appendChild(regenBtn);
-        } else if (role === 'user') {
+        } else {
           var editBtn = document.createElement('button');
           editBtn.className = 'msg-action-btn';
-          editBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg> Edit';
+          editBtn.innerHTML = 'Edit';
           editBtn.onclick = function() { editMessage(this); };
           actions.appendChild(editBtn);
         }
-
         var delBtn = document.createElement('button');
         delBtn.className = 'msg-action-btn';
-        delBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.41-1.41L12 12.59l2.12-2.12 1.41 1.41L13.41 14l2.12 2.12-1.41 1.41L12 15.41l-2.12 2.12-1.41-1.41L10.59 14l-2.13-2.12zM15.5 4l-1-1h-5l-1 1H5v2h14V4z"/></svg> Delete';
+        delBtn.innerHTML = 'Delete';
         delBtn.onclick = function() { deleteSingleMessage(this); };
         actions.appendChild(delBtn);
-
         bubble.appendChild(actions);
       }
-
       row.appendChild(bubble);
       messagesEl.appendChild(row);
       if (!noScroll) scrollToBottom();
@@ -2525,11 +2514,9 @@
       var messagesEl = document.getElementById('messages');
       var row = document.createElement('div');
       row.className = 'msg-row ai';
-
       var bubble = document.createElement('div');
       bubble.className = 'bubble typing-bubble';
       bubble.innerHTML = '<div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
-
       row.appendChild(bubble);
       messagesEl.appendChild(row);
       scrollToBottom();
@@ -2537,9 +2524,7 @@
     }
 
     function removeTyping(row) {
-      if (row && row.parentNode) {
-        row.parentNode.removeChild(row);
-      }
+      if (row && row.parentNode) row.parentNode.removeChild(row);
     }
 
     function scrollToBottom(force) {
@@ -2547,9 +2532,7 @@
         var wrap = document.querySelector('.messages-wrap');
         if (wrap) {
           wrap.scrollTop = wrap.scrollHeight;
-          if (force) {
-             document.getElementById('scroll-bottom-btn').style.display = 'none';
-          }
+          if (force) document.getElementById('scroll-bottom-btn').style.display = 'none';
         }
       }, 50);
     }
@@ -2566,19 +2549,12 @@
     function clearChat() {
       conversationHistory = [];
       var messagesEl = document.getElementById('messages');
-
-      // remove all children
-      while (messagesEl.firstChild) {
-        messagesEl.removeChild(messagesEl.firstChild);
-      }
-
-      // re-add empty state
+      while (messagesEl.firstChild) messagesEl.removeChild(messagesEl.firstChild);
       var emptyDiv = document.createElement('div');
       emptyDiv.className = 'empty-state';
       emptyDiv.id = 'empty-state';
-      emptyDiv.innerHTML = '<div class="empty-icon"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg></div><h2>How can I help?</h2><p>Ask me anything. I&#39;m here and ready.</p>';
+      emptyDiv.innerHTML = '<div class="empty-icon"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg></div><h2>How can I help?</h2>';
       messagesEl.appendChild(emptyDiv);
-
       hideClearConfirm();
     }
 
@@ -2586,28 +2562,18 @@
       var select = document.getElementById('model-select');
       var currentVal = select.value || MODEL || localStorage.getItem('model') || "anthropic/claude-3.5-sonnet";
       select.innerHTML = '';
-      
       var query = filterText ? filterText.toLowerCase() : "";
       var foundCurrent = false;
-
       for (var i = 0; i < allModels.length; i++) {
         var m = allModels[i];
-        if (query && m.name.toLowerCase().indexOf(query) === -1 && m.id.toLowerCase().indexOf(query) === -1) {
-          continue;
-        }
+        if (query && m.name.toLowerCase().indexOf(query) === -1 && m.id.toLowerCase().indexOf(query) === -1) continue;
         var opt = document.createElement('option');
         opt.value = m.id;
         opt.textContent = m.name;
-        if (m.id === currentVal) {
-          opt.selected = true;
-          foundCurrent = true;
-        }
+        if (m.id === currentVal) { opt.selected = true; foundCurrent = true; }
         select.appendChild(opt);
       }
-      
-      if (!foundCurrent && select.options.length > 0) {
-        select.options[0].selected = true;
-      }
+      if (!foundCurrent && select.options.length > 0) select.options[0].selected = true;
     }
 
     function filterModels() {
@@ -2627,22 +2593,12 @@
             try {
               var data = JSON.parse(xhr.responseText);
               var newModels = [];
-              for (var i = 0; i < data.data.length; i++) {
-                newModels.push({ id: data.data[i].id, name: data.data[i].name });
-              }
-              newModels.sort(function(a, b) {
-                return a.name.localeCompare(b.name);
-              });
+              for (var i = 0; i < data.data.length; i++) newModels.push({ id: data.data[i].id, name: data.data[i].name });
+              newModels.sort(function(a, b) { return a.name.localeCompare(b.name); });
               allModels = newModels;
-              
-              var filterVal = document.getElementById('model-filter').value;
-              renderModels(filterVal);
-            } catch(e) {
-              alert('Failed to parse models.');
-            }
-          } else {
-            alert('Failed to load models.');
-          }
+              renderModels(document.getElementById('model-filter').value);
+            } catch(e) { alert('Failed to parse models.'); }
+          } else { alert('Failed to load models.'); }
         }
       };
       xhr.send();
@@ -2650,7 +2606,8 @@
 
     function deleteSingleMessage(btn) {
       if (confirm('Delete this message?')) {
-        var row = btn.parentNode.parentNode.parentNode;
+        var row = findParentRow(btn);
+        if (!row) return;
         var wrap = document.getElementById('messages');
         var nodes = wrap.querySelectorAll('.msg-row');
         var idx = -1;

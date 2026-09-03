@@ -1,27 +1,26 @@
 # Developer Onboarding Guide
 
-Welcome to LegacyChat! This onboarding guide is designed to help you set up the codebase locally, understand our development workflows, and master the technical constraints of building for legacy environments like iOS 9 Safari.
+Welcome to LegacyChat! This guide is designed to help software engineers set up the repository locally, master legacy WebKit compatibility requirements, and debug applications targeting iOS 9.3.6 Safari on iPad Mini 1st Gen.
 
 ---
 
-## 1. Quick-Start Local Setup
+## 1. Quick-Start Local Launch
 
-Since LegacyChat is a standalone client with zero bundlers or compiler steps, launching it is extremely straightforward.
+Because LegacyChat is a standalone client with zero build steps or npm compilers, launching it takes seconds:
 
 ### Prerequisites
-- A modern web browser (for development) or a target device (e.g., iPad Mini 1st Gen running iOS 9.3.6) for testing.
-- A local server runner (highly recommended to avoid `file://` CORS blockages when testing APIs).
+- A modern web browser (for code editing) or a target device (e.g., iPad Mini 1st Gen running iOS 9.3.6) for testing.
+- A local static web server runner (to prevent local file CORS restrictions during API calls).
 
-### Step-by-Step Launch
+### Launch Steps
 1. **Clone the repository**:
    ```bash
    git clone https://github.com/gininaba/legacychat.git
    cd legacychat
    ```
 
-2. **Start a local static server**:
-   You can use python, node, or ruby to host `index.html` locally:
-   - **Node.js (npx)**:
+2. **Start a local static web server**:
+   - **Node.js**:
      ```bash
      npx http-server . -p 3000
      ```
@@ -30,60 +29,87 @@ Since LegacyChat is a standalone client with zero bundlers or compiler steps, la
      python3 -m http.server 3000
      ```
 
-3. **Navigate to the address**:
-   Open browser to `http://localhost:3000`.
+3. **Open browser**:
+   Navigate to `http://localhost:3000`.
 
 ---
 
-## 2. Key Tech Stack & Compatibility Constraints
+## 2. Mandatory ES5 Syntax & API Matrix
 
-Developing for 2016-era WebKit browsers means you **cannot** use modern Javascript or CSS specs. Every modification must be validated against these pillars:
+Developing for 2016-era WebKit engines requires strict adherence to legacy standards. Never use ES6+ features in `index.html`:
 
-### Pure ES5 Syntax
-- **No `let` or `const`**: Use `var` for all declarations.
-- **No arrow functions**: Use `function() {}` syntax.
-- **No template literals**: Use string concatenation (`"Hello " + name`).
-- **No destructurings or rest/spread operators**: Use index-based selection or object property assignments.
-
-### Legacy DOM APIs
-- **No `fetch()`**: Use `XMLHttpRequest` for all HTTP requests (see [API.md](file:///Volumes/1TB%20Graphics%20SSD/Sansan_DO_NOT_TOUCH/Projects/legacychat/API.md)).
-- **No native Promises, async/await**: Rely on standard async callbacks or custom callback triggers.
-- **Canvas-based compression**: Large file payloads will crash the 5MB browser `localStorage` boundary. Any camera files must be rendered to Canvas first and converted to optimized standard JPEGs.
-
-### Legacy Style/Layouts
-- **No CSS Grid**: Use CSS Flexbox layouts.
-- **Webkit Prefixes**: Include `-webkit-` prefixed values for Flexbox configurations (e.g., `-webkit-flex`, `-webkit-box-orient`, etc.) to support iOS 9 Safari.
-- **No CSS Custom Variables**: Hardcode color and padding values or use theme classes applied directly to the `<body>` element.
+| Category | ❌ Forbidden (ES6+) | ✅ Mandatory (ES5 Standard) |
+|---|---|---|
+| **Variables** | `let x = 10;`<br>`const y = 20;` | `var x = 10;`<br>`var y = 20;` |
+| **Functions** | `const add = (a, b) => a + b;` | `function add(a, b) { return a + b; }` |
+| **Strings** | ``var text = `Hello ${name}`;`` | `var text = "Hello " + name;` |
+| **HTTP Requests** | `fetch(url).then(res => res.json())` | `var xhr = new XMLHttpRequest(); ...` |
+| **Async Logic** | `async function()` / `await` | Standard asynchronous callback functions |
+| **Objects** | `{ a, b }` (Short-hand) | `{ a: a, b: b }` (Explicit key-value) |
+| **Arrays / Rest** | `[...items, newItem]` | `items.concat([newItem])` or `items.push(newItem)` |
+| **DOM Slicing** | `Array.from(nodes)` | `Array.prototype.slice.call(nodes)` |
 
 ---
 
-## 3. Development & PR Workflow
+## 3. Styling & Glassmorphism Guidelines
 
-1. **Create a feature branch**:
-   Follow the naming format: `feat/feature-name` or `fix/bug-name`.
-   ```bash
-   git checkout -b feat/my-new-feature
+1. **Vendor Prefixes**: Always include `-webkit-` prefixes for CSS flexbox and visual filters:
+   ```css
+   .my-container {
+     display: -webkit-box;
+     display: -webkit-flex;
+     display: flex;
+     -webkit-box-orient: vertical;
+     -webkit-box-direction: normal;
+     -webkit-flex-direction: column;
+     flex-direction: column;
+   }
    ```
-
-2. **Local Testing**:
-   Ensure you verify layout responsiveness in both light and dark themes. Test compatibility using iOS Simulator or directly on an older target device by running a tunnel program like `ngrok` to expose your localhost server:
-   ```bash
-   ngrok http 3000
+2. **Progressive Glassmorphism**: Use backdrop blurs with clear translucent fallback backgrounds so engines without backdrop support render gracefully:
+   ```css
+   .nav-bar {
+     background: rgba(249, 249, 249, 0.88);
+     -webkit-backdrop-filter: blur(20px);
+     backdrop-filter: blur(20px);
+   }
    ```
-
-3. **Submit a Pull Request**:
-   - Keep pull requests focused on a single feature or bug fix.
-   - Attach screenshot updates under the `Screenshots/` directory if your PR alters visual elements.
+3. **No CSS Custom Properties**: Do not use CSS variables (`var(--primary-color)`). Hardcode values or use theme classes on `document.body` (`body.dark-mode`).
 
 ---
 
-## 4. Beginner FAQ
+## 4. USB Remote Debugging on iOS 9 Safari
 
-### Why does the API key input keep resetting?
-The API key is cached locally using `localStorage`. If your browser is in Private/Incognito mode or your storage permissions are blocked, settings will revert on refresh.
+To inspect DOM states or debug JavaScript execution on a physical iPad Mini:
 
-### Can I build or bundle this into multiple files?
-No. The core value of this project is that it exists entirely as a single `index.html` file that users can load from any environment (e.g., download to local desktop, save on home screen) with zero installation steps. Do not add Webpack, Vite, or npm bundle dependencies.
+1. **Enable Web Inspector on iPad**:
+   - Open **Settings** → **Safari** → **Advanced**.
+   - Toggle **Web Inspector** to **ON**.
 
-### How do I troubleshoot Safari on iOS 9?
-Connect your iPad to a macOS computer via USB. Open Safari on macOS, enable the developer menu (`Settings` -> `Advanced` -> `Show features for web developers`), and select your iPad Mini target under the `Develop` menu to open a remote web inspector panel.
+2. **Enable Developer Menu on macOS Safari**:
+   - Open Safari on macOS.
+   - Go to **Settings** → **Advanced** → Check **"Show features for web developers"**.
+
+3. **Connect iPad via USB**:
+   - Connect iPad Mini to Mac using a Lightning-to-USB cable.
+   - Open LegacyChat in Safari on the iPad.
+   - On macOS Safari, open the **Develop** menu, select your iPad device, and click `index.html` to open the Web Inspector console.
+
+4. **Expose Localhost Server via Tunnel**:
+   - To access your local `localhost:3000` server on the physical iPad Mini, run a tunnel:
+     ```bash
+     npx ngrok http 3000
+     ```
+   - Open the generated `https://xxxx.ngrok-free.app` URL in iPad Safari.
+
+---
+
+## 5. Development & PR Checklist
+
+When making contributions:
+
+1. **Verify Syntax**: Run an ES5 keyword scan to confirm no `const`, `let`, or `=>` syntax exists in `<script>`:
+   ```bash
+   node -e "const code = require('fs').readFileSync('index.html','utf8'); ['const ','let ','=>','async ','await '].forEach(k => console.log(k.trim(), code.split(k).length-1));"
+   ```
+2. **Test Responsive Layouts**: Test in both Light and Dark modes.
+3. **Update Documentation**: Update [`COMPONENTS.md`](file:///Volumes/1TB%20Graphics%20SSD/Sansan_DO_NOT_TOUCH/Projects/legacychat/COMPONENTS.md) or [`API.md`](file:///Volumes/1TB%20Graphics%20SSD/Sansan_DO_NOT_TOUCH/Projects/legacychat/API.md) if adding new global state variables or functions.

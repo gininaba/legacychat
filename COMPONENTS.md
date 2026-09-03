@@ -1,141 +1,197 @@
 # Code Architecture & Component Breakdown
 
-This document provides a comprehensive analysis of the components, global states, and functions defined within the standalone [index.html](file:///Volumes/1TB%20Graphics%20SSD/Sansan_DO_NOT_TOUCH/Projects/legacychat/index.html) file.
+This document provides a technical analysis of the visual DOM hierarchy, CSS styling systems, global state variables, and functional blocks defined within [`index.html`](file:///Volumes/1TB%20Graphics%20SSD/Sansan_DO_NOT_TOUCH/Projects/legacychat/index.html).
 
 ---
 
-## 1. UI & DOM Architecture
+## 1. UI & DOM Architecture Hierarchy
 
-LegacyChat's layout is split into two major screens toggleable via DOM style manipulation, alongside drawer overlays:
+LegacyChat renders two main view states (`#setup-screen` and `#chat-screen`), alongside slide-over drawer panels and modal dialogs:
 
-```
-┌────────────────────────────────────────────────────────┐
-│                        index.html                      │
-├───────────────────────────┬────────────────────────────┤
-│   #setup-screen           │   #chat-screen             │
-│   (Configuration Form)    │   (Active Conversation)    │
-│   ├── API Key Input       │   ├── Navigation Bar       │
-│   ├── Model Filter        │   ├── Messages Viewport    │
-│   ├── Model Dropdown      │   │   ├── Bubbles          │
-│   ├── Persona Select      │   │   └── Actions          │
-│   ├── Theme Selector      │   └── Input & Control Bar  │
-│   └── Advanced settings   │                            │
-│                           │   #history-drawer (Overlay)│
-│                           │   └── Search & Chat List   │
-└───────────────────────────┴────────────────────────────┘
+```text
+index.html
+├── <head> (Meta tags, Apple PWA WebApp icons, CSS stylesheet)
+└── <body>
+    ├── #setup-screen (Configuration Screen)
+    │   └── .setup-card
+    │       ├── h1 / p (Header & Description)
+    │       ├── #group-api-key (API Key Input)
+    │       ├── #group-model (Model Filter & Dropdown Selector)
+    │       ├── #group-persona (Persona Selector & Custom System Prompt Input)
+    │       ├── #group-theme (Light / Dark Theme Selector)
+    │       ├── #group-temp & #group-tokens (Advanced Temperature & Token Cap Sliders)
+    │       └── #start-btn ("Start Chatting" Action Button)
+    │
+    ├── #chat-screen (Active Chat Environment)
+    │   └── .chat-container
+    │       ├── .nav-bar (Glassmorphic Header)
+    │       │   ├── .nav-btn (Open History Drawer Button)
+    │       │   ├── .nav-title (App Title, Model Badge, Token Counter)
+    │       │   └── .nav-btn ("New Chat" Action Button)
+    │       ├── #scroll-bottom-btn (Floating SVG Chevron Scroll Button)
+    │       ├── .messages-wrap#messages (Scrollable Message Viewport)
+    │       │   ├── .empty-state#empty-state (Landing Prompt View)
+    │       │   └── .msg-row (Dynamic Message Rows with slideInUp Animation)
+    │       │       └── .bubble (User gradient bubble / AI white-dark bubble)
+    │       │           ├── Markdown HTML Content / Syntactical Code Blocks
+    │       │           └── .bubble-actions (Copy, Edit, Regenerate, Delete Buttons)
+    │       └── .input-bar (Glassmorphic Footer Bar)
+    │           ├── .attach-btn & #image-upload (File Selector Input)
+    │           ├── .input-wrap
+    │           │   └── .input-col
+    │           │       ├── #image-preview-wrap (Base64 Image Thumbnail Preview)
+    │           │       ├── #user-input (Auto-resizing Textarea)
+    │           │       └── #char-counter (Surfaces when prompt > 500 chars)
+    │           ├── #stop-btn (Abort Generation XHR Button)
+    │           └── #send-btn (Submit Prompt Button)
+    │
+    ├── #confirm-overlay (Single Thread Clear Confirmation Modal)
+    ├── #confirm-all-overlay (Clear All History Confirmation Modal)
+    ├── #history-overlay (Drawer Backdrop Overlay)
+    └── #history-drawer (Slide-Over Navigation Drawer)
+        ├── .drawer-header (Title & Close Button)
+        ├── #history-search (Debounced Chat Search Input)
+        ├── #history-list (Dynamic Saved Threads List)
+        └── .drawer-footer (Export, Import, Clear All, and Settings Buttons)
 ```
 
 ---
 
-## 2. Global State Variables
+## 2. Global State Variables Reference
 
-The application manages local state using the following ES5 variables:
+All application state is maintained in standard ES5 global variables:
 
-| Variable Name | Type | Purpose / Description |
+| Variable Name | Type | Purpose & Lifecycle Description |
 |---|---|---|
-| `API_KEY` | `String` | Stores the user's OpenRouter API key. |
-| `MODEL` | `String` | The model slug selected (e.g., `anthropic/claude-3.5-sonnet`). |
-| `SYSTEM_PROMPT` | `String` | Instructions injected as the `system` role roleplay context. |
-| `conversationHistory` | `Array` | List of JSON message objects: `[{role: "user"|"assistant", content: String|Array}]`. |
-| `isLoading` | `Boolean` | Flag indicating an active API request is in progress. |
-| `chats` | `Array` | History list of all stored conversations loaded from `localStorage`. |
-| `currentImageBase64` | `String` | Holds the Base64 representation of the currently attached image. |
+| `API_KEY` | `String` | Stores OpenRouter credentials loaded from or committed to `localStorage.api_key`. |
+| `MODEL` | `String` | Selected model slug (e.g. `anthropic/claude-3.5-sonnet`). |
+| `SYSTEM_PROMPT` | `String` | System role instruction injected at index 0 of completion request payloads. |
+| `conversationHistory` | `Array` | Active thread message objects array: `[{role: "user"|"assistant", content: String|Array}]`. |
+| `isLoading` | `Boolean` | True when an API streaming request is in progress; disables send buttons. |
+| `chats` | `Array` | Complete array of historical conversation objects loaded from `localStorage.chats`. |
+| `currentImageBase64` | `String` | Holds Base64 JPEG data URL of currently attached image before sending. |
 | `ADVANCED` | `Object` | Configuration object: `{ temp: Number, tokens: Number }`. |
-| `currentChatId` | `String` | Timestamp string matching the active conversation ID. |
-| `currentXHR` | `XMLHttpRequest` | References the active streaming XHR instance to allow aborting. |
-| `sessionTokens` | `Number` | Track aggregated token usage in the active session. |
-| `customPersonas` | `Array` | Array of saved user-created system prompt structures. |
-| `allModels` | `Array` | Cached model metadata containing `{ id: String, name: String }`. |
+| `currentChatId` | `String` | Unique timestamp ID matching active thread in `chats`. |
+| `currentXHR` | `XMLHttpRequest` | Active streaming `XMLHttpRequest` instance; used by `stopGeneration()`. |
+| `sessionTokens` | `Number` | Aggregated count of total tokens consumed in the current active session. |
+| `customPersonas` | `Array` | Saved user custom system prompts array loaded from `localStorage.custom_personas`. |
+| `allModels` | `Array` | Models catalog array containing `{ id: String, name: String }`. |
+| `saveChatsDebounceTimer` | `Timeout` | 500ms debounce timer for writing history to browser storage. |
+| `filterHistoryDebounceTimer` | `Timeout` | 150ms debounce timer for history list search filtering. |
 
 ---
 
-## 3. Core JavaScript Functions Reference
+## 3. Categorized JavaScript Functions Reference
 
-Below is a breakdown of key functional blocks inside the `<script>` section of `index.html`.
+### A. Lifecycle & Screen Navigation
 
-### API Communications & Streaming
+#### `startChat()`
+- **Purpose**: Validates settings form inputs, updates global variables (`API_KEY`, `MODEL`, `SYSTEM_PROMPT`), commits values to `localStorage`, hides `#setup-screen`, displays `#chat-screen`, and initializes the chat viewport.
+- **Dependencies**: `safeLocalStorageSetItem()`, `loadChat()`, `startNewChat()`.
 
-#### A. `callAPI(callback, onChunk)`
-- **Purpose**: Establishes a POST request to OpenRouter's `/chat/completions` API using standard `XMLHttpRequest` with SSE (Server-Sent Events) streaming chunk processing.
-- **Inputs**:
-  - `callback`: `function(reply, error)` - Invoked upon complete execution or error.
-  - `onChunk`: `function(chunk)` - Invoked progressively as character sequences stream in.
-- **Outputs**: None (Asynchronous side-effects).
-- **Dependencies**: `API_KEY`, `MODEL`, `SYSTEM_PROMPT`, `conversationHistory`, `ADVANCED`, `xhr.onreadystatechange`.
-- **Usage Example**:
-  ```javascript
-  callAPI(function(reply, err) {
-    if (err) console.error("Error: ", err);
-    else console.log("Complete!");
-  }, function(chunk) {
-    console.log("Chunk received: ", chunk);
-  });
-  ```
+#### `showSettings()`
+- **Purpose**: Switches view from `#chat-screen` back to `#setup-screen`, populating form controls with current global variable values.
+
+#### `toggleTheme(theme)`
+- **Purpose**: Applies or removes `.dark-mode` CSS class on `document.body` and stores selection (`light` / `dark`) in `localStorage`.
 
 ---
 
-### Markdown & HTML Parsing
+### B. Generation Pipeline & API Communications
 
-#### B. `formatMarkdown(text)`
-- **Purpose**: Parse raw Markdown text into safe ES5-compatible HTML (supporting lists, headers, bold, italic, code blocks with syntax highlighting, and GFM tables).
-- **Inputs**: `text` (`String`) - Raw markdown.
-- **Outputs**: `String` - Formatted HTML.
-- **Dependencies**: `escapeHTML()`.
-- **Usage Example**:
-  ```javascript
-  var rawMarkdown = "### Hello\nThis is **bold** and `code`.";
-  var renderedHtml = formatMarkdown(rawMarkdown);
-  // Outputs: "<h3>Hello</h3><p>This is <strong>bold</strong> and <code>code</code>.</p>"
-  ```
+#### `sendMessage()`
+- **Purpose**: Reads `#user-input`, validates text or image attachments, appends user bubble to DOM, pushes message to `conversationHistory`, resets input controls, and triggers `runGeneration()`.
 
-#### C. `sanitizeHTML(htmlString)`
-- **Purpose**: Sanitizes input HTML string, removing dangerous elements to guard against Cross-Site Scripting (XSS).
-- **Inputs**: `htmlString` (`String`) - Unsanitized markup.
-- **Outputs**: `String` - Clean HTML.
-- **Dependencies**: None.
-- **Usage Example**:
-  ```javascript
-  var dangerousHtml = '<script>alert("XSS")</script><p onload="run()">Hello</p>';
-  var safeHtml = sanitizeHTML(dangerousHtml);
-  // Outputs: '<p>Hello</p>'
-  ```
+#### `runGeneration(onComplete)`
+- **Purpose**: Handles complete completion lifecycle. Spawns typing indicator, establishes API request, and initializes a **60ms interval render timer** (`~16fps`) to buffer incoming SSE chunks without thrashing legacy CPU cores.
+- **Dependencies**: `callAPI()`, `showTyping()`, `removeTyping()`, `formatMarkdown()`, `cleanAIResponse()`, `debouncedSaveChatsToStorage()`.
+
+#### `regenerateMessage(btn)`
+- **Purpose**: Truncates `conversationHistory` up to selected AI message index, removes trailing DOM bubbles, saves thread, and calls `runGeneration()`.
+
+#### `stopGeneration()`
+- **Purpose**: Invokes `currentXHR.abort()`, removes active typing indicator, resets `isLoading = false`, and restores send button state.
+
+#### `callAPI(callback, onChunk)`
+- **Purpose**: Sends POST payload to OpenRouter `/chat/completions` endpoint via standard `XMLHttpRequest` with `readyState === 3` SSE buffer parsing.
+- **Error Handling**: Extracts HTTP 400, 401, 402, 429, and 60s timeout error message strings for user feedback.
+
+#### `generateTitleIfNeeded()`
+- **Purpose**: Sends a lightweight completion request (`max_tokens: 10`) after initial message exchange to generate a concise 3-word title for the thread.
 
 ---
 
-### Image Upload & Compression
+### C. DOM Traversal & UI Helpers
 
-#### D. `handleImageUpload(event)`
-- **Purpose**: Reads user-uploaded image files, resizes them using a hidden HTML5 `<canvas>`, and converts them to a lightweight JPEG Base64 URI.
-- **Inputs**: `event` (`Event`) - File selection input change event.
-- **Outputs**: None (Sets `currentImageBase64`).
-- **Dependencies**: `FileReader`, `Image`, `HTMLCanvasElement`.
-- **Usage Example**:
-  ```html
-  <input type="file" onchange="handleImageUpload(event)">
-  ```
+#### `findParentRow(element)`
+- **Purpose**: Safely walks up parent nodes from `element` until it finds the enclosing `.msg-row` container, providing robust traversal independent of DOM structure changes.
+```javascript
+function findParentRow(element) {
+  var cur = element;
+  while (cur && cur !== document.body) {
+    if (cur.className && cur.className.indexOf('msg-row') > -1) {
+      return cur;
+    }
+    cur = cur.parentNode;
+  }
+  return null;
+}
+```
+
+#### `appendBubble(role, text, isError, noScroll, isRawHtml, rawTextContent)`
+- **Purpose**: Dynamically constructs message row markup (`.msg-row`), applies sender styles, formats content, appends bubble action buttons (Copy, Edit, Regenerate, Delete), and inserts into `#messages`.
+
+#### `copyCodeBlock(btn)`
+- **Purpose**: Extracts raw code string from code block container and writes it to clipboard using `document.execCommand('copy')`, displaying temporary "Copied!" button feedback.
+
+#### `copyMessage(btn)`
+- **Purpose**: Writes raw message text stored in `data-raw` attribute to clipboard.
+
+#### `scrollToBottom(force)`
+- **Purpose**: Scrolls `#messages` viewport to maximum scroll height. Shows/hides `#scroll-bottom-btn` based on viewport scroll position.
 
 ---
 
-### Storage & History Management
+### D. Markdown Engine & Sanitization
 
-#### E. `saveChatsToStorage()`
-- **Purpose**: Backs up all chat histories to `localStorage`. Stored images from previous chats are dynamically cleared (replaced by lightweight SVG templates) to fit within browser storage quotas.
-- **Inputs**: None.
-- **Outputs**: None.
-- **Dependencies**: `localStorage`, `chats`, `currentChatId`, `safeLocalStorageSetItem()`.
-- **Usage Example**:
-  ```javascript
-  saveChatsToStorage();
-  ```
+#### `formatMarkdown(text)`
+- **Purpose**: Parses raw Markdown string into HTML output:
+  - Code Blocks (` ```lang ... ``` `) → Extracted into syntax-highlighted containers with header copy buttons.
+  - Headers (`#`, `##`, `###`) → `<h1>`, `<h2>`, `<h3>`.
+  - Inline Formatting → `**bold**`, `__bold__`, `*italic*`, `_italic_`, `~~strikethrough~~`, `` `inline code` ``.
+  - Lists & Tables → Unordered (`<ul>`), Ordered (`<ol>`), and Markdown GFM tables (`<table>`).
 
-#### F. `safeLocalStorageSetItem(key, value)`
-- **Purpose**: Safely commits a key-value pair to `localStorage`, catching `QuotaExceededError` and alerting the user of resolution steps if full.
-- **Inputs**:
-  - `key` (`String`)
-  - `value` (`String`)
-- **Outputs**: `Boolean` - Returns `true` if successful, `false` otherwise.
-- **Dependencies**: `localStorage`.
-- **Usage Example**:
-  ```javascript
-  var success = safeLocalStorageSetItem('theme', 'dark');
-  ```
+#### `sanitizeHTML(htmlString)`
+- **Purpose**: Purifies HTML output, stripping dangerous elements (`<script>`, `<iframe>`, `<object>`, `<style>`, `<link>`), event handlers (`onload`, `onerror`, `onclick`), and `javascript:` URIs to prevent XSS attacks.
+
+---
+
+### E. Image Canvas Compression
+
+#### `handleImageUpload(event)`
+- **Purpose**: Reads selected image file via `FileReader`, resizes image on hidden `<canvas>` to maximum 800x800 resolution, converts canvas to 60% JPEG Base64 URI (`currentImageBase64`), and renders thumbnail preview.
+
+#### `removeImage()`
+- **Purpose**: Clears `currentImageBase64` data and hides thumbnail preview container.
+
+---
+
+### F. Storage, History & Maintenance
+
+#### `loadChatsFromStorage()`
+- **Purpose**: Parses `localStorage.chats` JSON string into global `chats` array.
+
+#### `saveChatsToStorage()`
+- **Purpose**: Serializes `chats` array to `localStorage`. Replaces image Base64 payloads from historical threads with tiny SVG placeholder strings to fit within 5MB browser limits.
+
+#### `debouncedSaveChatsToStorage()`
+- **Purpose**: Wraps `saveChatsToStorage()` in a 500ms timer to prevent rapid storage writes during fast message streaming.
+
+#### `pruneStaleDrafts()`
+- **Purpose**: Enumerates `localStorage` keys on startup and removes any `draft_*` key whose chat ID no longer exists in `chats`.
+
+#### `clearAllChats()`
+- **Purpose**: Clears all thread objects in `chats`, updates `localStorage`, re-renders history list, and resets UI to a new conversation.
+
+#### `exportHistory()` & `importHistory(event)`
+- **Purpose**: Downloads `chats` history array as a `legacychat-history.json` file or parses an uploaded JSON file to merge historical threads.
